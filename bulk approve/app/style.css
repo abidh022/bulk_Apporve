@@ -1,12 +1,12 @@
 body {
     font-family: Arial, sans-serif;
-    margin: 20px;
+    /* margin: 20px; */
   }
   
   table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
+    margin-bottom: 70px;
   }
   
   th, td {
@@ -36,85 +36,147 @@ body {
     resize: none;
   }
   
-  .buttons {
-    display: flex;
-    justify-content: flex-end; 
-    gap: 10px;
-  } 
-  
-  .buttons button { 
-    padding: 10px 20px;
-    border: none; 
-    border-radius: 4px;
-    cursor: pointer; 
+  .rejection-reason-container {
+    margin: 20px 0;
+    font-family: Arial, sans-serif;
+}
+
+.rejection-reason-container label {
     font-size: 14px;
-  } 
-  
-  .buttons .approve { 
-    background-color: #4CAF50;
-    color: white; 
-  }
-  
-  .buttons .reject { 
-    background-color: #f44336;
-    color: white; 
-  }
-  
-  .buttons button:hover { 
-    opacity: 0.9;
-  } 
-  
-  input[type="checkbox"] { 
-    cursor: pointer;
-  }
-  
-  ._status {  
-    width: 10px;  
-    height: 10px;  
-    border-radius: 50%;  
-    background: gray;  
-  }  
-   
-  ._approved {  
-    background: green; 
-  }   
-   
-  ._rejected {  
-    background: red; 
-  } 
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
 
-  .top{
-    display: flex;
-    gap: 15px;
-  }
+.rejection-reason-dropdown {
+    width: 40%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    background-color: #fff;
+    margin-bottom: 15px;
+    transition: border 0.3s ease;
+}
 
-  #title , #popup_header{
-    font-family :Arial, Helvetica, sans-serif;
-    color: #313949;
-    font-size: 20px;
-    margin-top: 15px; 
-    font-variant : no-contextual;
-    font-optical-sizing:auto;
-    font-style: normal;
-    /* font-weight: 400; */
+.rejection-reason-dropdown:focus {
+    border-color: #4CAF50;
+}
 
-  }
+.other-reason-container {
+    display: none;
+    margin-top: 10px;
+}
 
-  #searchBar{
-  font-family: sans-serif;
-    font-weight: normal;
-  margin-bottom: 15px;
-    font-size: 16px;
-    cursor: text;
-    width: 50%;
-    height: 35px;
-    padding-left: 5px;
-    text-align: left;
-    border: 1.5px solid lightgray;
-    background-color: #EEF2F8;
-    box-shadow: 0 2px 10px rgba(84, 137, 250, 0.1);
-    transition: border-color 0.3s;
-    border-radius: 6px;
+.other-reason-input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    background-color: #f9f9f9;
+}
+
+.other-reason-input:focus {
+    border-color: #4CAF50;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;
+  width: 100%; 
+  position: fixed;
+  bottom: 0;  
+  background-color: #fff;
+  z-index: 9999;
+  margin-left: -8PX;
+  border-top: 1px solid gray; 
+  margin-bottom: 5px;
+}
+
+.buttons {
+  display: flex;
+  gap: 10px; 
+  margin-left: 20px ;
+}
+  
+.buttons button { 
+  padding: 10px 20px;
+  border: none; 
+  border-radius: 4px;
+  cursor: pointer; 
+  font-size: 14px;
+  height: auto;
+  width: 125px;
+} 
+
+.buttons .approve { 
+  background-color: #4CAF50;
+  color: white; 
+}
+
+.buttons .reject { 
+  background-color: #f44336;
+  color: white; 
+}
+
+.buttons button:hover { 
+  opacity: 0.9;
+} 
+
+
+input[type="checkbox"] { 
+  cursor: pointer;
+}
+
+._status {  
+  width: 10px;  
+  height: 10px;  
+  border-radius: 50%;  
+  background: gray;  
+}  
+  
+._approved {  
+  background: green; 
+}   
+  
+._rejected {  
+  background: red; 
+} 
+
+.top{
+  display: flex;
+  gap: 15px;
+}
+
+#title , #popup_header{
+  font-family :Arial, Helvetica, sans-serif;
+  color: #313949;
+  font-size: 20px;
+  margin-top: 15px; 
+  font-variant : no-contextual;
+  font-optical-sizing:auto;
+  font-style: normal;
+  /* font-weight: 400; */
+
+}
+
+#searchBar{
+font-family: sans-serif;
+  font-weight: normal;
+margin-bottom: 15px;
+  font-size: 16px;
+  cursor: text;
+  width: 50%;
+  height: 35px;
+  padding-left: 5px;
+  text-align: left;
+  border: 1.5px solid lightgray;
+  background-color: #EEF2F8;
+  box-shadow: 0 2px 10px rgba(84, 137, 250, 0.1);
+  transition: border-color 0.3s;
+  border-radius: 6px;
 }
  
 .btns{
@@ -160,7 +222,9 @@ body {
 .moduleclass{
   width: 70%;
   color: #7B859B;
-  margin-right: 5px;
+  margin-right: 20px;
+  margin-top: 5px;
+  margin-left: 30px;
 }
 
 .selectbox {
@@ -201,6 +265,7 @@ body {
 
 #_module_select{
   justify-self: center;
+  display: flex;
 }
 
 
@@ -216,32 +281,70 @@ body {
   .module-item{
     display: flex;
     align-items: center;
-    background-color: #f0f0f0; /* Light gray background */
+    background-color: #f0f0f0; 
     border-radius: 16px;
     padding: 5px 12px;
     font-size: 16px;
     color: #333;
     font-weight: 500;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
     transition: background-color 0.3s ease;
   }
 
   .module-item:hover {
-    background-color: #e0e0e0; /* Slightly darker gray on hover */
+    background-color: #e0e0e0; 
   }
 
   .remove-module {
     margin-left: 8px;
     cursor: pointer;
-    /* font-size: 16px; */
-    color: #ff6f61; /* Red color for the remove icon */
+    color: #ff6f61; 
     font-weight: bold;
     transition: color 0.3s ease;
   }
 
   .remove-module:hover {
-    color: #d9534f; /* Darker red color on hover */
+    color: #d9534f; 
   }
+
+/* Styling for the select box container */
+#moduleContainer {
+  /* width: 20%; */
+  /* margin: 10px 0; */
+  height: 35px;
+  width: 10%;
+
+}
+/* toast  */
+/* #toast-container > .toast {
+  transition: opacity 0.5s ease-out !important; 
+  opacity: 1 !important;
+}
+
+#toast-container > .toast.toast-fade {
+  opacity: 0 !important;
+}
+@keyframes fadeOutFast {
+  from {
+      opacity: 1;
+  }
+  to {
+      opacity: 0;
+  }
+}
+
+#toast-container > .toast {
+  animation: fadeOutFast 0.2s forwards !important;
+} */
+
+.selected-modules {
+  padding: 10px;
+  font-size: 1rem;
+  color: #333;
+  font-family: sans-serif;
+  margin-top: 10px;
+  display: none;
+}
 
 /* .selected-modules .module-item {
   display: inline-block;
@@ -277,8 +380,11 @@ body {
 }
 .select2-selection__choice {
   padding-right: 10px;
-} 
+}  
 
+.select2-selection__clear {
+  display: none !important;
+}
 /* Pagination footer at the end of content */
 .pagination-footer {
   background-color: #fff;
@@ -287,16 +393,27 @@ body {
   border-radius: 10px ;
   display: flex;
   align-items: center;
-  justify-content: left;
+  justify-content: flex-end;
   width: 98%;
   /* box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); */
-  margin-top: 20px; 
+  /* margin-top: 20px;  */
 }
 
-.pagination-footer select, .pagination-footer button {
+.pagination-footer select {
   background-color: #fff;
   color: #333;
   border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 14px;  
+  cursor: pointer;
+  margin: 0 5px;
+}
+
+.pagination-footer button {
+  background-color: #fff;
+  color: #333;
+  border :none;
   border-radius: 5px;
   padding: 5px 10px;
   font-size: 14px;  
@@ -312,7 +429,7 @@ body {
 
 /* Disable button styling */
 .pagination-footer button:disabled {
-  background-color: #f0f0f0;
+  /* background-color: #f0f0f0; */
   color: #aaa;
   cursor: not-allowed;
 }
@@ -347,3 +464,203 @@ body {
 .pagination-footer select:hover {
   border-color: #007bff;
 }
+
+.popup {
+  display: none; 
+  position: fixed; 
+  z-index: 1; 
+  left: 0;
+  top: 0;
+  width: 100%; 
+  height: 100%; 
+  background-color: rgba(0, 0, 0, 0.4); 
+}
+
+@keyframes dropFromTop {
+  from {
+    top: -100%; /* Start above the screen */
+  }
+  to {
+    top: 0; /* End at the top of the screen */
+  }
+}
+
+.popup_content {
+  background-color: white;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 500px;
+  position: absolute;
+  left: 50%;
+  top: -100%; 
+  transform: translateX(-50%);
+  animation: dropFromTop 0.5s ease-out forwards; 
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Rejection Reason section styles (matching comment section) */
+#rejectionReasonSection {
+  margin: 20px auto;
+  padding: 20px;
+  max-width: 500px;
+  border-radius: 8px;
+}
+
+#rejectionReasonSection label {
+  color: #5f5f5f;
+  margin-bottom: 8px;
+  font-family: sans-serif;
+  display: block;
+}
+
+#rejectionReasonSection select {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  font-family: sans-serif;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  background-color: white;
+  resize: vertical;
+}
+
+#rejectionReasonSection select:focus {
+  outline: none;
+  border-color: #6d94cd;
+  box-shadow: 0 0 10px rgba(35, 180, 237, 0.6);
+}
+
+#rejectionReasonSection #otherReasonContainer {
+  margin-top: 10px;
+}
+
+#rejectionReasonSection #otherReasonContainer input {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  font-family: sans-serif;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+#rejectionReasonSection #otherReasonContainer input:focus {
+  outline: none;
+  border-color: #6d94cd;
+  box-shadow: 0 0 10px rgba(35, 180, 237, 0.6);
+}
+
+#rejectionReasonSection select:focus,
+#rejectionReasonSection #otherReasonContainer input:focus {
+  border-color: #6d94cd;
+  box-shadow: 0 0 10px rgba(35, 180, 237, 0.6);
+}
+
+#commentSection {
+  margin: 20px auto;
+  padding: 20px;
+  max-width: 500px;
+  border-radius: 8px;
+}
+
+#commentSection label {
+  color: #5f5f5f;
+  margin-bottom: 8px;
+  font-family: sans-serif;
+  display: block;
+}
+
+#commentSection textarea {
+  width: 100%;
+  height: 90px;
+  padding: 10px;
+  font-size: 1rem;
+  font-family: sans-serif;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+#commentSection textarea:focus {
+  outline: none;
+  border-color: #6d94cd;
+  box-shadow: 0 0 10px rgba(35, 180, 237, 0.6);
+}
+
+#commentSection textarea::placeholder {
+  color: #888;
+  font-family: sans-serif;
+}
+
+/* Delegate Section Styles */
+#delegateSection {
+  margin: 20px auto;
+  padding: 20px;
+  max-width: 500px;
+  border-radius: 8px;
+}
+
+#delegateSection label {
+  color: #5f5f5f;
+  margin-bottom: 8px;
+  font-family: sans-serif;
+  display: block;
+}
+
+#delegateSection select {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  font-family: sans-serif;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  background-color: white;
+}
+
+#delegateSection select:focus {
+  outline: none;
+  border-color: #6d94cd;
+  box-shadow: 0 0 10px rgba(35, 180, 237, 0.6);
+}
+
+
+
+button.approve-btn, button.reject-btn, button.delegate-btn {
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #3b3b3b;
+  background-color: transparent;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+button.approve-btn::after,
+button.reject-btn::after,
+button.delegate-btn::after {
+    content: ' /';
+    margin: 0px;
+}
+
+
+button.reject-btn::after {
+  content: '';
+}
+
+
+button[disabled] {
+  color: #aaa; 
+  cursor: not-allowed; 
+}
+
+button.approve-btn:hover,
+button.reject-btn:hover,
+button.delegate-btn:hover {
+  color: #007bff; 
+  text-decoration: underline;
+}
+
