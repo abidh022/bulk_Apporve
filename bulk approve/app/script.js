@@ -14,13 +14,12 @@ var ZAGlobal = {
 
         // Render filtered records in the main table
         if (ZAGlobal.filteredRecords.length === 0 && ZAGlobal.processedRecords.length === 0) {
-            $('._tbody').html('<tr><td colspan="5">No records available to approve/reject.</td></tr>');
+            $('._tbody').html('<tr><td colspan="6">No records available to approve/reject.</td></tr>');
         } else {
             // Apply pagination
             var startIndex = (ZAGlobal.currentPage - 1) * ZAGlobal.recordsPerPage;
             var endIndex = startIndex + ZAGlobal.recordsPerPage;
             var recordsToShow = ZAGlobal.filteredRecords.slice(startIndex, endIndex);
-            // var allRecordsToShow = recordsToShow.concat(ZAGlobal.processedRecords);
 
             recordsToShow.forEach(function (record) {
                 tbody += `<tr data-id="${record.entity.id}" data-module="${record.module}">
@@ -33,29 +32,30 @@ var ZAGlobal = {
                                 <button class="delegate-btn" data-id="${record.entity.id}">Delegate</button>
                                 <button class="reject-btn" data-id="${record.entity.id}">Reject</button>
                             </td>
-                            <td>${record.is_approved ? 'Approved' : record.is_rejected ? 'Rejected' : 'Waiting for approval'}</td>
+                            <td>${record.is_approved ? 'Approved' : record.is_rejected ? 'Rejected' : record.is_delegated ? 'Delegated' : 'Waiting for approval'}</td>
                         </tr>`;
             });
 
             ZAGlobal.processedRecords.forEach(function (record) {
                 tbody += `<tr data-id="${record.entity.id}" data-module="${record.module}">
-                            <td><input type="checkbox" data-id="${record.entity.id}" data-module="${record.module}" ${ZAGlobal.selectedRecords.includes(record.entity.id) ? 'checked' : ''} disabled class="disabled-checkbox"></td>
+                            <td><input type="checkbox" data-id="${record.entity.id}" data-module="${record.module}" ${ZAGlobal.selectedRecords.includes(record.entity.id) ? '' : ''} disabled class="disabled-checkbox"></td>
                             <td>${record.entity.name}</td>
                             <td>${record.rule.name}</td>
                             <td>${record.module}</td>
                             <td>
                                 <button class="approve-btn" data-id="${record.entity.id}" disabled>Approve</button>
                                 <button class="delegate-btn" data-id="${record.entity.id}" disabled>Delegate</button>
-                                <button class="reject-btn" data-id="${record.entity.id}" disabled>Reject</button>
+                                <button class="reject-btn" data-id="${record.entity.id}" disabled>Reject</button>   
                             </td>
-                            <td>${record.is_approved ? 'Approved' : record.is_rejected ? 'Rejected' : 'Waiting for approval'}</td>
+                            <td>${record.is_approved ? 'Approved' : record.is_rejected ? 'Rejected' : record.is_delegated ? 'Delegated' : 'Waiting for approval'}</td>
                         </tr>`;
             });
 
             $('._tbody').append(tbody);
         }
         ZAGlobal.updatePagination();
-        ZAGlobal.selectAll();
+        resetHeaderCheckbox();
+        
     },
 
     updatePagination: function () {
@@ -149,7 +149,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
             ZAGlobal.triggerToast('Record not found.', 3000, 'warning');
             return;
         }
-        recordsToProcess.push(record); // Process the selected record
+        recordsToProcess.push(record);
     } else {
         // Bulk action
         const checkedRecords = ZAGlobal.selectedRecords.length;
@@ -157,14 +157,15 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
             ZAGlobal.triggerToast('Please select at least one record to approve/reject.', 3000, 'warning');
             return;
         }
-        recordsToProcess = ZAGlobal.waitingRecords.filter(rec => ZAGlobal.selectedRecords.includes(rec.entity.id)); // Get selected records
+        recordsToProcess = ZAGlobal.waitingRecords.filter(rec => ZAGlobal.selectedRecords.includes(rec.entity.id)); 
     }
 
-    // const checkedRecords = ZAGlobal.selectedRecords.length;
     document.getElementById('approvalRejectPopup').style.display = 'none';
     document.getElementById('approvalRejectPopup').style.display = 'flex';
     document.getElementById('popupTitle').textContent = action === 'approve' ? 'Approve Records' : action === 'reject' ? 'Reject Records' : 'Delegate Records';
-    document.getElementById('comment').value = '';  // Reset the comment field
+    document.getElementById('commentSection').style.display = action === 'reject' ? 'none' : 'block';
+    document.getElementById('comment').value = '';  
+    document.getElementById('rejectionReason').value = 'selectReasonOption';  
     document.getElementById('rejectionReasonSection').style.display = action === 'reject' ? 'block' : 'none';
     document.getElementById('otherReasonContainer').style.display = 'none';
     document.getElementById('submitActionBtn').textContent = action === 'approve' ? 'Approve' : action === 'reject' ? 'Reject' : 'Delegate';
@@ -206,7 +207,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
 
         if (action === 'reject') {
             rejectionReason = $('#rejectionReason').val();
-            if (rejectionReason === 'q') {
+            if (rejectionReason === 'selectReasonOption') {
                 ZAGlobal.triggerToast('Please select a rejection reason.', 3000, 'warning');
                 return;
             }
@@ -218,7 +219,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
                 }
                 comment = otherReason;
             } else {
-                comment = rejectionReason;
+                // comment = rejectionReason;
             }
         }
 
@@ -228,7 +229,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
                 ZAGlobal.triggerToast('Please select a user to delegate the record.', 3000, 'warning');
                 return;
             }
-            comment = `Delegated to ${selectedUser}`;
+            comment = $('#comment').val().trim() ;
         }
 
         let approvedRecordsCount = 0;
@@ -249,6 +250,14 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
                 if (action === 'delegate') {
                     res = await ZOHO.CRM.API.approveRecord(config);
                     delegatedRecordsCount++;
+                    const delegatedRecord = ZAGlobal.waitingRecords.find(r => r.entity.id === res.details.id);
+                    if (delegatedRecord) {
+                        delegatedRecord.is_delegated = true;  
+                        ZAGlobal.processedRecords.push(delegatedRecord); 
+                        ZAGlobal.waitingRecords = ZAGlobal.waitingRecords.filter(r => r.entity.id !== res.details.id);
+                        ZAGlobal.filteredRecords = ZAGlobal.filteredRecords.filter(r => r.entity.id !== res.details.id);
+                        ZAGlobal.reRenderTableBody();
+                    }
                     // console.log("Delegate response:", res); // Log the response for delegation
                 } else {
                     res = await ZOHO.CRM.API.approveRecord(config);
@@ -260,7 +269,6 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
                     // console.log("Approve/Reject response:", res); 
                 }
 
-                // Check if the response is successful
                 if (!res || res.code !== 'SUCCESS') {
                     throw new Error(`Error processing the record. Response code: ${res.code}`);
                 }
@@ -290,12 +298,10 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
         } else if (action === 'delegate') {
             toastMessage = `${delegatedRecordsCount} records were delegated`;
         }
-
-        // Show the toast after processing the records
+        
         ZAGlobal.triggerToast(toastMessage, 3000, action === 'approve' ? 'success' : action === 'reject' ? 'error' : 'info');
-
-
-        // Close the popup after action is completed
+        
+        // Close popup
         document.getElementById('approvalRejectPopup').style.display = 'none';
         ZAGlobal.reRenderTableBody();
         recordsToProcess = [];
@@ -371,20 +377,21 @@ ZOHO.embeddedApp.on("PageLoad", function (data) {
 
 function populateModules(modules) {
     const select = document.getElementById('module');
-    select.innerHTML = ''; // Clear existing options
+    select.innerHTML = ''; 
 
-    // Add "All Modules" option at the top
     const allModulesOption = document.createElement('option');
-    allModulesOption.value = 'AllModules'; // Value for "All Modules"
-    allModulesOption.textContent = "All Modules"; // Label for "All Modules"
+    allModulesOption.value = 'AllModules';
+    allModulesOption.textContent = "All Modules"; 
+    allModulesOption.selected = true;
     select.appendChild(allModulesOption);
 
-    // Add module options dynamically
     modules.forEach(module => {
-        const option = document.createElement('option');
-        option.value = module.api_name;
-        option.textContent = module.api_name;
-        select.appendChild(option);
+        if (module.visible == true && module.visibility == 1 && module.creatable == true) {
+            const option = document.createElement('option');
+            option.value = module.api_name;
+            option.textContent = module.actual_plural_label;
+            select.appendChild(option);
+        }
     });
 
     $('#module').select2({
@@ -398,7 +405,7 @@ function populateModules(modules) {
             }
         }
     });
-    // Handle change event for selecting a module
+    
     $('#module').on('change', function () {
         handleModuleSelection();
     });
@@ -456,11 +463,11 @@ document.getElementById('searchBar').addEventListener('input', function () {
     });
 });
 
-
 ZAGlobal.selectAll = function () {
     const headerCheckbox = document.querySelector('#selectAllCheckbox');
-    const rowCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+    const rowCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]:not(.disabled-checkbox):not(:checked)');
 
+    // Handle "Select All" checkbox click
     headerCheckbox.addEventListener('change', () => {
         rowCheckboxes.forEach(checkbox => {
             checkbox.checked = headerCheckbox.checked;
@@ -476,29 +483,48 @@ ZAGlobal.selectAll = function () {
                 }
             }
         });
+
         ZAGlobal.reRenderTableBody();
+        updateSelectAllCheckboxState(rowCheckboxes, headerCheckbox); 
     });
 
-    updateHeaderCheckboxState(rowCheckboxes, headerCheckbox);
+    updateSelectAllCheckboxState(rowCheckboxes, headerCheckbox);
 };
 
 function updateHeaderCheckboxState(rowCheckboxes, headerCheckbox) {
     const checkedCheckboxes = Array.from(rowCheckboxes).filter(checkbox => checkbox.checked);
-
-    // If all checkboxes are checked, set the header checkbox to checked
     if (checkedCheckboxes.length === rowCheckboxes.length) {
         headerCheckbox.checked = true;
         headerCheckbox.indeterminate = false;
     }
-    // If no checkboxes are checked, set the header checkbox to unchecked   
     else if (checkedCheckboxes.length === 0) {
         headerCheckbox.checked = false;
         headerCheckbox.indeterminate = false;
     }
-    // If some checkboxes are checked, set the header checkbox to indeterminate
     else {
         headerCheckbox.checked = false;
         headerCheckbox.indeterminate = true;
+    }
+}
+
+function updateSelectAllCheckboxState() {
+    const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]:not(:disabled)');
+    const selectAllCheckbox = document.querySelector('#selectAllCheckbox');
+
+    const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+    const noneChecked = Array.from(checkboxes).every(checkbox => !checkbox.checked);
+
+    if (allChecked) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false; 
+    }
+    else if (noneChecked) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false; 
+    }
+    else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
     }
 }
 
@@ -513,6 +539,79 @@ document.querySelector('tbody').addEventListener('change', function (event) {
             if (index > -1) {
                 ZAGlobal.selectedRecords.splice(index, 1);
             }
+        }
+
+        ZAGlobal.reRenderTableBody();
+        updateSelectAllCheckboxState(); // Update "Select All" checkbox state after a change
+    }
+});
+
+// Event listener for "Select All" checkbox
+document.querySelector('#selectAllCheckbox').addEventListener('change', function (event) {
+    const isChecked = event.target.checked;
+    const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]:not(:disabled)'); 
+
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = isChecked;
+        const recordId = checkbox.dataset.id;
+        // Add or remove the record from selectedRecords based on "Select All" state
+        if (isChecked && !ZAGlobal.selectedRecords.includes(recordId)) {
+            ZAGlobal.selectedRecords.push(recordId);
+        } else if (!isChecked) {
+            const index = ZAGlobal.selectedRecords.indexOf(recordId);
+            if (index > -1) {
+                ZAGlobal.selectedRecords.splice(index, 1);
+            }
+        }
+    });
+
+    ZAGlobal.reRenderTableBody();
+    updateSelectAllCheckboxState();
+});
+
+function processAction(action, recordIds) {
+    recordIds.forEach(recordId => {
+        processRecord(recordId);
+    });
+
+    resetHeaderCheckbox();
+    ZAGlobal.reRenderTableBody();
+    updateSelectAllCheckboxState(); 
+
+}
+
+// Function to handle the processed records
+function processRecord(recordId) {
+    const recordRow = document.querySelector(`tr[data-id="${recordId}"]`);
+    const checkbox = recordRow.querySelector('input[type="checkbox"]');
+    checkbox.disabled = true;
+
+    recordRow.classList.add('processed');
+    
+    document.querySelector('tbody').appendChild(recordRow);
+
+    updateSelectAllCheckboxState();
+    resetHeaderCheckbox();
+}
+
+// Function to reset the header checkbox to unchecked
+function resetHeaderCheckbox() {
+    const selectAllCheckbox = document.querySelector('#selectAllCheckbox');
+    selectAllCheckbox.checked = false; 
+    selectAllCheckbox.indeterminate = false; 
+}
+
+//To send the selected data to the selected record
+document.querySelector('tbody').addEventListener('change', function (event) {
+    if (event.target.type === 'checkbox') {
+        const recordId = event.target.dataset.id;
+        if (event.target.checked) {
+            ZAGlobal.selectedRecords.push(recordId);
+        } else {
+            const index = ZAGlobal.selectedRecords.indexOf(recordId);
+            if (index > -1) {
+                ZAGlobal.selectedRecords.splice(index, 1);
+            }   
         }
 
         ZAGlobal.reRenderTableBody();
@@ -540,7 +639,7 @@ ZOHO.embeddedApp.init().then(function () {
 });
 
 function loadEnglishTranslations() {
-    console.log("Defualt eng lan");
+    // console.log("Defualt eng lan");
 }
 
 function loadChineseTranslations() {
@@ -561,184 +660,4 @@ function loadChineseTranslations() {
     document.getElementById('popup_header').innerText = "过滤器列表";
 }
 
-// -----------------------------------------------------------------------------------working// Button action for approve/reject
-// ZAGlobal.buttonAction = async function (action, recordId) {
-// console.log(`Action: ${action} for Record id ${recordId}`); // Log the action type (approve/reject/delegate)
-// const checkedRecords = ZAGlobal.selectedRecords.length;
-// if (checkedRecords === 0) {
-//     ZAGlobal.triggerWarning('Please select at least one record to approve/reject.', 3000, 'warning');
-//     return;
-// }
 
-//     // Show the popup
-//     document.getElementById('approvalRejectPopup').style.display = 'flex';
-//     document.getElementById('popupTitle').textContent = action === 'approve' ? 'Approve Records' : 'Reject Records';
-//     document.getElementById('comment').value = '';  // Reset the comment field
-//     document.getElementById('rejectionReasonSection').style.display = action === 'reject' ? 'block' : 'none';
-//     document.getElementById('otherReasonContainer').style.display = 'none'; // Hide "Other" input by default
-//     document.getElementById('submitActionBtn').textContent = action === 'approve' ? 'Approve' : 'Reject';
-
-//     const submitButton = document.getElementById('submitActionBtn');
-
-//     // Remove existing event listener if there is one
-//     submitButton.removeEventListener('click', handleSubmitAction);
-
-//     // Add a single event listener for the submit button
-//     submitButton.addEventListener('click', handleSubmitAction);
-
-//     if (action === 'delegate') {
-//         // Populate the user list if delegating
-//         await populateUserList();
-//     }
-
-//     $('#rejectionReason').on('change', function () {
-//         const selectedReason = $(this).val();
-//         if (selectedReason === 'Other') {
-//             $('#otherReasonContainer').show();
-//         } else {
-//             $('#otherReasonContainer').hide();
-//         }
-//     });
-
-//     // Handle the Cancel button to close the popup
-//     document.getElementById('cancelPopupBtn').addEventListener('click', () => {
-//         document.getElementById('approvalRejectPopup').style.display = 'none';
-//     });
-
-//     // Handle the Submit button to approve or reject the records
-//     async function handleSubmitAction() {
-//         let comment = document.getElementById('comment').value.trim();
-//         let rejectionReason = '';
-//         let otherReason = '';
-//         let selectedUser = null; // Initialize selectedUser to null by default
-
-//         if (action === 'reject') {
-//             rejectionReason = $('#rejectionReason').val();
-//             if (rejectionReason === 'Other') {
-//                 otherReason = $('#otherReason').val().trim();
-//                 if (!otherReason) {
-//                     ZAGlobal.triggerWarning('Please specify the reason for rejection.', 3000, 'warning');
-//                     return;
-//                 }
-//                 comment = otherReason;
-//             }
-//             if (!comment) {
-//                 ZAGlobal.triggerWarning('Please provide a rejection comment.', 3000, 'warning');
-//                 return;
-//             }
-//         }
-//         if (action === 'delegate') {
-//             selectedUser = $('#userSelect').val();
-//             if (!selectedUser) {
-//                 ZAGlobal.triggerWarning('Please select a user to delegate the record.', 3000, 'warning');
-//                 return;
-//             }
-//             comment = `Delegated to ${selectedUser}`;
-//         }
-
-//     let approvedRecordsCount = 0;
-//     let rejectedRecordsCount = 0;
-//     let delegatedRecordsCount = 0;
-
-//     for (const recordId of ZAGlobal.selectedRecords) {
-//         const record = ZAGlobal.waitingRecords.find(rec => rec.entity.id == recordId);
-//         if (record) {
-//             const config = {
-//                 Entity: record.module,
-//                 RecordID: record.entity.id,
-//                 actionType: action,
-//                 comments: comment,
-//                 delegatedTo: selectedUser || null
-//             };
-
-//             try {
-//                 let res = await ZOHO.CRM.API.approveRecord(config);
-//                 if (!res) throw new Error('Error processing the record');
-
-//                 // Move processed records to the processed list
-//                 if (action === 'approve') {
-//                     record.is_approved = true;
-//                     approvedRecordsCount++;
-//                 } else if (action === 'reject') {
-//                     record.is_rejected = true;
-//                     rejectedRecordsCount++;
-//                 } else if (action === 'delegate') {
-//                     // Logic for delegation
-//                     record.is_delegated = true;
-//                     delegatedRecordsCount++;
-//                 }
-
-//                 // Remove from waiting records and add to processed records
-//                 ZAGlobal.waitingRecords = ZAGlobal.waitingRecords.filter(r => r.entity.id !== record.entity.id);
-//                 ZAGlobal.filteredRecords = ZAGlobal.filteredRecords.filter(r => r.entity.id !== record.entity.id);
-//                 ZAGlobal.processedRecords.push(record);
-//                 // Re-render the table to update
-//                 ZAGlobal.reRenderTableBody();
-//             } catch (error) {
-//                 console.log('Error processing record:', error);
-//             }
-//         }
-//     }
-//     if (action === 'approve') {
-//         ZAGlobal.triggerAppRejToast(action, approvedRecordsCount, 0);
-//     } else if (action === 'reject') {
-//         ZAGlobal.triggerAppRejToast(action, 0, rejectedRecordsCount);
-//     } else if (action === 'delegate') {
-//         ZAGlobal.triggerAppRejToast(action, delegatedRecordsCount, 0);
-//     }
-//     if (checkedRecords === (approvedRecordsCount + rejectedRecordsCount)) {
-//         ZAGlobal.triggerAppRejToast(action, approvedRecordsCount, rejectedRecordsCount);
-//     }
-// }
-// };
-
-// $(document).on('click', '.approve-btn', function () {
-//     ZAGlobal.buttonAction('approve');
-// });
-
-// $(document).on('click', '.reject-btn', function () {
-//     ZAGlobal.buttonAction('reject');
-// });
-
-// $(document).on('click', '.delegate-btn', function () {
-//     ZAGlobal.buttonAction('delegate');
-// });
-
-// Show the popup when the button is clicked
-// document.getElementById('searchbtn').addEventListener('click', () => {
-//     document.getElementById('search_popup').style.display = 'flex';
-// });
-
-// // Close the popup when the close button is clicked
-// document.getElementById('cancelBtn').addEventListener('click', () => {
-//     document.getElementById('search_popup').style.display = 'none';
-// });
-
-// Close the popup if the user clicks outside of the popup
-// window.addEventListener('click', (event) => {
-//     if (event.target === document.getElementById('search_popup')) {
-//         document.getElementById('search_popup').style.display = 'none';
-//     }
-// });
-
-// document.getElementById('doneBtn').addEventListener('click', () => {
-//     const selectedModule = $('#module').val();
-//     if (selectedModule.length === 0) {
-//         ZAGlobal.triggerToast('Please select any one module', 3000, 'warning');
-//         return;
-//     }
-//     filterRecordsByModule(selectedModule);
-//     document.getElementById('search_popup').style.display = 'none'; // Close the popup after done
-// });
-
-// Reset button action
-// document.getElementById('resetTableBtn').addEventListener('click', () => {
-//     ZAGlobal.filteredRecords = ZAGlobal.allRecords.filter(record => !ZAGlobal.processedRecords.some(proc => proc.entity.id === record.entity.id));
-//     ZAGlobal.selectedRecords = [];
-//     ZAGlobal.recordsPerPage = [10];
-//     const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
-//     checkboxes.forEach(checkbox => checkbox.checked = false);
-//     ZAGlobal.reRenderTableBody();
-//     document.getElementById('search_popup').style.display = 'none';
-//     $('#module').val(null).trigger('change');
-// });
