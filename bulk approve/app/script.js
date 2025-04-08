@@ -21,26 +21,62 @@ var ZAGlobal = {
             var recordsToShow = ZAGlobal.filteredRecords.slice(startIndex, endIndex);
 
             recordsToShow.forEach(function (record) {
+
+                var initiatedTime = new Date(record.initiated_time);
+                var currentTime = new Date();
+                var timeDiff = currentTime - initiatedTime;
+                var daysAgo = Math.floor(timeDiff / (1000 * 3600 * 24));
+                var options = {
+                    weekday: 'short',
+                    day: 'numeric',  
+                    month: 'short',  
+                    year: 'numeric',  
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true     
+                };
+                var formattedDate = initiatedTime.toLocaleString('en-IN', options);
+
                 tbody += `<tr data-id="${record.entity.id}" data-module="${record.module}">
                             <td><input type="checkbox" data-id="${record.entity.id}" data-module="${record.module}" ${ZAGlobal.selectedRecords.includes(record.entity.id) ? 'checked' : ''}></td>
                             <td>${record.entity.name}</td>
                             <td>${record.rule.name}</td>
                             <td>${record.module}</td>
-                            <td>
+                            <td>${formattedDate}</td>
+                            <td>${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago</td>                            <td>
                                 <button class="approve-btn" data-id="${record.entity.id}">Approve</button>
                                 <button class="delegate-btn" data-id="${record.entity.id}">Delegate</button>
                                 <button class="reject-btn" data-id="${record.entity.id}">Reject</button>
                             </td>
                             <td>${record.is_approved ? 'Approved' : record.is_rejected ? 'Rejected' : record.is_delegated ? 'Delegated' : 'Waiting for approval'}</td>
                         </tr>`;
+
             });
 
+
             ZAGlobal.processedRecords.forEach(function (record) {
+                var initiatedTime = new Date(record.initiated_time);
+                var currentTime = new Date();
+                var timeDiff = currentTime - initiatedTime;
+                var daysAgo = Math.floor(timeDiff / (1000 * 3600 * 24));
+                var options = {
+                    weekday: 'short',
+                    day: 'numeric',  
+                    month: 'short',  
+                    year: 'numeric',  
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true     
+                };
+                var formattedDate = initiatedTime.toLocaleString('en-IN', options);
+
                 tbody += `<tr data-id="${record.entity.id}" data-module="${record.module}">
                             <td><input type="checkbox" data-id="${record.entity.id}" data-module="${record.module}" ${ZAGlobal.selectedRecords.includes(record.entity.id) ? '' : ''} disabled class="disabled-checkbox"></td>
                             <td>${record.entity.name}</td>
                             <td>${record.rule.name}</td>
                             <td>${record.module}</td>
+                            <td>${formattedDate}</td>
+                            <td>${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago</td>
                             <td>
                                 <button class="approve-btn" data-id="${record.entity.id}" disabled>Approve</button>
                                 <button class="delegate-btn" data-id="${record.entity.id}" disabled>Delegate</button>
@@ -54,7 +90,7 @@ var ZAGlobal = {
         }
         ZAGlobal.updatePagination();
         resetHeaderCheckbox();
-        
+
     },
 
     updatePagination: function () {
@@ -100,6 +136,8 @@ var ZAGlobal = {
         });
     }
 };
+
+
 
 async function populateUserList() {
     try {
@@ -155,15 +193,15 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
             ZAGlobal.triggerToast('Please select at least one record to approve/reject.', 3000, 'warning');
             return;
         }
-        recordsToProcess = ZAGlobal.waitingRecords.filter(rec => ZAGlobal.selectedRecords.includes(rec.entity.id)); 
+        recordsToProcess = ZAGlobal.waitingRecords.filter(rec => ZAGlobal.selectedRecords.includes(rec.entity.id));
     }
 
     document.getElementById('approvalRejectPopup').style.display = 'none';
     document.getElementById('approvalRejectPopup').style.display = 'flex';
     document.getElementById('popupTitle').textContent = action === 'approve' ? 'Approve Records' : action === 'reject' ? 'Reject Records' : 'Delegate Records';
     document.getElementById('commentSection').style.display = action === 'reject' ? 'none' : 'block';
-    document.getElementById('comment').value = '';  
-    document.getElementById('rejectionReason').value = 'selectReasonOption';  
+    document.getElementById('comment').value = '';
+    document.getElementById('rejectionReason').value = 'selectReasonOption';
     document.getElementById('rejectionReasonSection').style.display = action === 'reject' ? 'block' : 'none';
     document.getElementById('otherReasonContainer').style.display = 'none';
     document.getElementById('submitActionBtn').textContent = action === 'approve' ? 'Approve' : action === 'reject' ? 'Reject' : 'Delegate';
@@ -193,7 +231,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
     // Handle the Cancel button to close the popup
     document.getElementById('cancelPopupBtn').addEventListener('click', () => {
         document.getElementById('approvalRejectPopup').style.display = 'none';
-        recordsToProcess = [];  
+        recordsToProcess = [];
     });
 
     // Handle the Submit button to approve or reject the records
@@ -216,7 +254,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
                     return;
                 }
                 comment = otherReason;
-            } 
+            }
         }
 
         if (action === 'delegate') {
@@ -225,7 +263,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
                 ZAGlobal.triggerToast('Please select a user to delegate the record.', 3000, 'warning');
                 return;
             }
-            comment = $('#comment').val().trim() ;
+            comment = $('#comment').val().trim();
         }
 
         let approvedRecordsCount = 0;
@@ -248,8 +286,8 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
                     delegatedRecordsCount++;
                     const delegatedRecord = ZAGlobal.waitingRecords.find(r => r.entity.id === res.details.id);
                     if (delegatedRecord) {
-                        delegatedRecord.is_delegated = true;  
-                        ZAGlobal.processedRecords.push(delegatedRecord); 
+                        delegatedRecord.is_delegated = true;
+                        ZAGlobal.processedRecords.push(delegatedRecord);
                         ZAGlobal.waitingRecords = ZAGlobal.waitingRecords.filter(r => r.entity.id !== res.details.id);
                         ZAGlobal.filteredRecords = ZAGlobal.filteredRecords.filter(r => r.entity.id !== res.details.id);
                         ZAGlobal.reRenderTableBody();
@@ -294,9 +332,9 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
         } else if (action === 'delegate') {
             toastMessage = `${delegatedRecordsCount} records were delegated`;
         }
-        
+
         ZAGlobal.triggerToast(toastMessage, 3000, action === 'approve' ? 'success' : action === 'reject' ? 'error' : 'info');
-        
+
         document.getElementById('approvalRejectPopup').style.display = 'none';
         ZAGlobal.reRenderTableBody();
         recordsToProcess = [];
@@ -323,7 +361,7 @@ document.getElementById('cancelPopupBtn').addEventListener('click', () => {
 });
 
 
-let currentToast = null;  
+let currentToast = null;
 
 ZAGlobal.triggerToast = function (message, duration = 1000, type = 'info') {
 
@@ -331,8 +369,8 @@ ZAGlobal.triggerToast = function (message, duration = 1000, type = 'info') {
         currentToast.hideToast();
     }
     const backgroundColor = (type === 'warning') ? '#FFA500' :
-                            (type === 'success') ? '#4CAF50' :
-                            (type === 'error') ? '#F44336' : '#2196F3';
+        (type === 'success') ? '#4CAF50' :
+            (type === 'error') ? '#F44336' : '#2196F3';
 
     currentToast = Toastify({
         text: message,
@@ -373,11 +411,11 @@ ZOHO.embeddedApp.on("PageLoad", function (data) {
 // Display the active Modules  
 function populateModules(modules) {
     const select = document.getElementById('module');
-    select.innerHTML = ''; 
+    select.innerHTML = '';
 
     const allModulesOption = document.createElement('option');
     allModulesOption.value = 'AllModules';
-    allModulesOption.textContent = "All Modules"; 
+    allModulesOption.textContent = "All Modules";
     allModulesOption.selected = true;
     select.appendChild(allModulesOption);
 
@@ -401,7 +439,7 @@ function populateModules(modules) {
             }
         }
     });
-    
+
     $('#module').on('change', function () {
         handleModuleSelection();
     });
@@ -458,7 +496,7 @@ ZAGlobal.selectAll = function () {
         });
 
         ZAGlobal.reRenderTableBody();
-        updateSelectAllCheckboxState(rowCheckboxes, headerCheckbox); 
+        updateSelectAllCheckboxState(rowCheckboxes, headerCheckbox);
     });
 
     updateSelectAllCheckboxState(rowCheckboxes, headerCheckbox);
@@ -489,11 +527,11 @@ function updateSelectAllCheckboxState() {
 
     if (allChecked) {
         selectAllCheckbox.checked = true;
-        selectAllCheckbox.indeterminate = false; 
+        selectAllCheckbox.indeterminate = false;
     }
     else if (noneChecked) {
         selectAllCheckbox.checked = false;
-        selectAllCheckbox.indeterminate = false; 
+        selectAllCheckbox.indeterminate = false;
     }
     else {
         selectAllCheckbox.checked = false;
@@ -522,7 +560,7 @@ document.querySelector('tbody').addEventListener('change', function (event) {
 // Event listener for "Select All" checkbox
 document.querySelector('#selectAllCheckbox').addEventListener('change', function (event) {
     const isChecked = event.target.checked;
-    const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]:not(:disabled)'); 
+    const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]:not(:disabled)');
 
     checkboxes.forEach(checkbox => {
         checkbox.checked = isChecked;
@@ -549,7 +587,7 @@ function processAction(action, recordIds) {
 
     resetHeaderCheckbox();
     ZAGlobal.reRenderTableBody();
-    updateSelectAllCheckboxState(); 
+    updateSelectAllCheckboxState();
 
 }
 
@@ -560,7 +598,7 @@ function processRecord(recordId) {
     checkbox.disabled = true;
 
     recordRow.classList.add('processed');
-    
+
     document.querySelector('tbody').appendChild(recordRow);
 
     updateSelectAllCheckboxState();
@@ -570,8 +608,8 @@ function processRecord(recordId) {
 // Function to reset the header checkbox to unchecked
 function resetHeaderCheckbox() {
     const selectAllCheckbox = document.querySelector('#selectAllCheckbox');
-    selectAllCheckbox.checked = false; 
-    selectAllCheckbox.indeterminate = false; 
+    selectAllCheckbox.checked = false;
+    selectAllCheckbox.indeterminate = false;
 }
 
 //To send the selected data to the selected record
@@ -584,7 +622,7 @@ document.querySelector('tbody').addEventListener('change', function (event) {
             const index = ZAGlobal.selectedRecords.indexOf(recordId);
             if (index > -1) {
                 ZAGlobal.selectedRecords.splice(index, 1);
-            }   
+            }
         }
 
         ZAGlobal.reRenderTableBody();
