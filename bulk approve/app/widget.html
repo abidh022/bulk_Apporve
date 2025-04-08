@@ -23,35 +23,42 @@
   <h3 id="title">Bulk Record Approval</h3>
   <div class="top">
     <input type="text" id="searchBar" placeholder="Search">
-    <button id="searchbtn" class="btns">Select Module</button>
-    <button id="resetTableBtn" class="btns">Reset</button>
-    <div id="search_popup" class="_popup">
+    <!-- <button id="searchbtn" class="btns">Select Module</button>
+    <button id="resetTableBtn" class="btns">Reset</button> -->
+    <!-- <div id="search_popup" class="_popup">
       <div class="popup_content">
-        <!-- <span id="close_PopupBtn" class="close">&times;</span> -->
         <h3 id="popup_header">Select Module</h3>
         <div id="_module_select">
-        <label for="module" class="moduleclass">Modules</label>
-        <select class="selectbox" id="module" multiple="multiple"></select><br>
-      </div>
+          <label for="module" class="moduleclass">Modules</label>
+          <select class="selectbox" id="module">
+            <option value="" disabled selected>Select Module</option> 
+          </select><br>
+
+        </div>
         <div id="twobtns">
           <button id="doneBtn" class="btns">Done</button>
-          <button id="clearBtn" class="btns">Clear</button>
           <button id="cancelBtn">Cancel</button>
         </div>
-        <div class="selected-modules" id="selected-modules"></div> 
-    </div>
-    
-    </div>
-    </div>
+        <div class="selected-modules" id="selected-modules"></div>
+      </div>
+    </div> -->
+    <div id="moduleContainer">
+      <select id="module" class="selectbox">
+      </select>
+      <div id="selected-module-display" class="selected-modules" style="display: none;"></div>
+  </div>
+  </div>
 
   <table>
     <thead>
       <tr>
-        <th><input type="checkbox" id="selectAllCheckbox"/></th>
+        <th><input type="checkbox" id="selectAllCheckbox" /></th>
         <th id="recordNameHeader">Record Name</th>
         <th id="approvalProcessNameHeader">Approval Process Name</th>
         <th id="moduleIdHeader">Module</th>
-        <th id="recordIdHeader">Record Id</th>
+        <th id="dateCreatedBy">Created By</th>
+        <th id="dateCreatedBy">No. of days</th>
+        <th id="action">Action</th>
         <th id="statusHeader">Status</th>
       </tr>
     </thead>
@@ -59,16 +66,62 @@
     </tbody>
   </table>
 
-  <div class="comments-section">
-    <textarea class="_comments" placeholder="Comments"></textarea>
-  </div>
+  <div id="approvalRejectPopup" class="popup">
+    <div class="popup_content">
+      <!-- <span id="closePopup" class="clos  e">&times;</span> -->
+      <h3 id="popupTitle"></h3>
 
-  <div class="buttons">
-    <button class="reject" onclick="ZAGlobal.buttonAction('reject');">Bulk Reject</button>
-    <button class="approve" onclick="ZAGlobal.buttonAction('approve');">Bulk Approve</button>
+
+      <!-- Rejection Reason Dropdown (Only shown for rejection) -->
+      <div id="rejectionReasonSection" style="display:none;">
+        <label for="rejectionReason">Rejection Reason</label>
+        <select id="rejectionReason">
+          <option value="selectReasonOption">-- Select Reason --</option>
+          <option value="Incomplete Information">Incomplete Information</option>
+          <option value="Does Not Meet Requirements">Does Not Meet Requirements</option>
+          <option value="Duplicate Submission">Duplicate Submission</option>
+          <option value="Budget Constraints">Budget Constraints</option>
+          <option value="Policy Violation">Policy Violation</option>
+          <option value="Insufficient Justification">Insufficient Justification</option>
+          <option value="Exceeds Allowed Limits">Exceeds Allowed Limits</option>
+          <option value="Pending Additional Review">Pending Additional Review</option>
+          <option value="Incorrect Request Type">Incorrect Request Type</option>
+          <option value="Other">Other (Please Specify)</option>
+        </select>
+        <div id="otherReasonContainer" style="display: none;">
+          <label for="otherReason">Please Specify:</label>
+          <input type="text" id="otherReason" placeholder="Please specify the reason">
+        </div>
+      </div>
+
+      
+      <div id="delegateSection" style="display:none;">
+        <label for="userSelect">Users</label>
+        <select id="userSelect">
+          <!-- Populate this list dynamically with users -->
+        </select>
+      </div>
+      
+      <!-- Comment box (for both Approve and Reject) -->
+      <div id="commentSection">
+        <label for="comment">Comment</label>
+        <textarea id="comment" placeholder="Add your comments here (Optional)"></textarea>
+      </div>
+      
+      <div class="buttons">
+        <button id="cancelPopupBtn">Cancel</button>
+        <button id="submitActionBtn">Submit</button>
+      </div>
+    </div>
   </div>
-  <div id="paginationFooter" class="pagination-footer">
-</div>
+  </div>
+  <div class="footer">
+    <div class="buttons">
+      <button class="reject" onclick="ZAGlobal.buttonAction('reject');">Bulk Reject</button>
+      <button class="approve" onclick="ZAGlobal.buttonAction('approve');">Bulk Approve</button>
+    </div>
+    <div id="paginationFooter" class="pagination-footer"></div>
+  </div>
 </body>
 
 </html>
