@@ -12,7 +12,6 @@ var ZAGlobal = {
         $('._tbody').empty();
         var tbody = '';
 
-        // Render filtered records in the main table
         if (ZAGlobal.filteredRecords.length === 0 && ZAGlobal.processedRecords.length === 0) {
             $('._tbody').html('<tr><td colspan="6">No records available to approve/reject.</td></tr>');
         } else {
@@ -118,7 +117,6 @@ async function populateUserList() {
         userSelect.append(new Option('Choose User', '', false, false));
         userSelect.find('option').first().attr('disabled', true);
 
-        // Filter users who are active
         const activeUsers = res.users.filter(user => user.status === 'active');
 
         if (activeUsers.length === 0) {
@@ -195,7 +193,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
     // Handle the Cancel button to close the popup
     document.getElementById('cancelPopupBtn').addEventListener('click', () => {
         document.getElementById('approvalRejectPopup').style.display = 'none';
-        recordsToProcess = []; // Reset the recordsToProcess array when the popup is closed   
+        recordsToProcess = [];  
     });
 
     // Handle the Submit button to approve or reject the records
@@ -218,9 +216,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
                     return;
                 }
                 comment = otherReason;
-            } else {
-                // comment = rejectionReason;
-            }
+            } 
         }
 
         if (action === 'delegate') {
@@ -301,13 +297,11 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
         
         ZAGlobal.triggerToast(toastMessage, 3000, action === 'approve' ? 'success' : action === 'reject' ? 'error' : 'info');
         
-        // Close popup
         document.getElementById('approvalRejectPopup').style.display = 'none';
         ZAGlobal.reRenderTableBody();
         recordsToProcess = [];
     }
 }
-
 
 $(document).on('click', '.approve-btn', function () {
     const recordId = $(this).data('id');
@@ -328,7 +322,8 @@ document.getElementById('cancelPopupBtn').addEventListener('click', () => {
     document.getElementById('approvalRejectPopup').style.display = 'none';
 });
 
-let currentToast = null;  // Global variable to hold the current toast instance
+
+let currentToast = null;  
 
 ZAGlobal.triggerToast = function (message, duration = 1000, type = 'info') {
 
@@ -375,6 +370,7 @@ ZOHO.embeddedApp.on("PageLoad", function (data) {
     // }
 });
 
+// Display the active Modules  
 function populateModules(modules) {
     const select = document.getElementById('module');
     select.innerHTML = ''; 
@@ -439,29 +435,6 @@ function initializeModuleSelection(modules) {
     populateModules(modules);
     $('#module').on('change', handleModuleSelection);
 }
-
-// Search functionality to filter the table rows
-document.getElementById('searchBar').addEventListener('input', function () {
-    const searchValue = this.value.toLowerCase();
-    const rows = document.querySelectorAll('tbody tr');
-
-    rows.forEach(function (row) {
-        const columns = row.querySelectorAll('td');
-        let matchFound = false;
-
-        columns.forEach(function (column) {
-            if (column.textContent.toLowerCase().includes(searchValue)) {
-                matchFound = true;
-            }
-        });
-
-        if (matchFound) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-});
 
 ZAGlobal.selectAll = function () {
     const headerCheckbox = document.querySelector('#selectAllCheckbox');
