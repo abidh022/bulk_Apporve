@@ -1,3 +1,4 @@
+var initialRows;
 var ZAGlobal = {
     selectedRecords: [],
     allRecords: [],
@@ -92,6 +93,10 @@ var ZAGlobal = {
         }
         ZAGlobal.updatePagination();
         resetHeaderCheckbox();
+          // Sorting related.
+          let initialTBody = document.querySelector("._tbody");
+          initialRows = Array.from(initialTBody.rows);
+          //sorting related
 
     },
 
@@ -407,7 +412,57 @@ ZOHO.embeddedApp.on("PageLoad", function (data) {
             populateModules(data.modules);
         }
     });
+    filterRecords()
 });
+
+async function filterRecords() {
+    let filtered_flag = false;
+    let Module = document.getElementById('modules-list');
+    let searchKey = document.getElementById('record-name-filter-input');
+    let recordName_filter_type = document.getElementById('record-name-filter');
+    document.getElementById('cta-filter').addEventListener('click', async (e) => {
+        e.preventDefault();
+        let res = await ZOHO.CRM.API.getApprovalRecords({ type: "awaiting" });
+        let data = res.data;
+        if (searchKey.value == '') {
+            ZAGlobal.triggerToast('Enter a key to search', 1000, 'info');
+            searchKey.focus();
+            return;
+        }
+
+        switch (recordName_filter_type.value) {
+            case 'equals':
+                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase().includes(searchKey.value))));
+                break;
+            case 'not_equals':
+                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (!rec.entity.name.toLowerCase().includes(searchKey.value))))
+                break;
+            case 'starts_with':
+                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase().startsWith(searchKey.value))))
+                break;
+            case 'is':
+                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase() === searchKey.value.toLowerCase())))
+                break;
+            default:
+                console.log('default case');
+                break;
+        }
+        filtered_flag = true;
+        ZAGlobal.reRenderTableBody();
+    })
+    document.getElementById('cta-clear-filter').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (filtered_flag) {
+            filtered_flag = false;
+            searchKey.value = '';
+            ZAGlobal.filteredRecords = ZAGlobal.allRecords;
+            ZAGlobal.reRenderTableBody();
+        } else {
+            ZAGlobal.triggerToast('Nothing to Clear! No Filter Applied', 1000, 'info');
+        }
+    })
+}
+
 
 // Display the active Modules  
 function populateModules(modules) {
@@ -426,6 +481,8 @@ function populateModules(modules) {
             option.value = module.api_name;
             option.textContent = module.actual_plural_label;
             select.appendChild(option);
+            const optionClone = option.cloneNode(true);   // Sakthi's Code
+            document.getElementById('modules-list').appendChild(optionClone);
         }
     });
 
@@ -474,6 +531,13 @@ function initializeModuleSelection(modules) {
     populateModules(modules);
     $('#module').on('change', handleModuleSelection);
 }
+
+document.getElementById('filter-icon').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelector('#moduleContainer').classList.toggle('disabled');
+    document.querySelector('.filter-div').classList.toggle('hidden');
+})
+
 
 ZAGlobal.selectAll = function () {
     const headerCheckbox = document.querySelector('#selectAllCheckbox');
@@ -824,3 +888,136 @@ document.addEventListener('mouseover', function (e) {
         }, 10);
     }
 });
+
+
+// Sorting Related Works - Starts
+
+
+
+let tblHeader = document.querySelector("thead");
+let tblBody = document.querySelector("._tbody");
+let allHeadersList = Array.from(tblHeader.querySelectorAll("tr")[0].children);
+
+tblHeader.addEventListener("click", (e) => {
+    // e.preventDefault();
+    if (e.target === allHeadersList[0] || e.target === document.querySelector('#selectAllCheckbox')) {
+        e.stopImmediatePropagation();
+        return;
+    }
+    let dropdown = (e.target.closest("th")).querySelector(".dropdown-menu")
+    if (dropdown) dropdown.style.display = "flex";
+    let currentDropDown = e.target.closest("th").querySelector(".dropdown-menu");
+    if (currentDropDown) {
+        (document.querySelectorAll(".dropdown-menu")).forEach(element => {
+            if ((element.style.display === "flex") && (currentDropDown !== element)) {
+                element.style.display = "none";
+            }
+        });
+
+
+
+        currentDropDown.addEventListener("click", (event) => {
+            console.log(currentDropDown);
+
+            let allRows = Array.from(tblBody.rows);
+            let indexOfColumn = allHeadersList.indexOf(currentDropDown.closest("th"));
+            allRows.sort((rowA, rowB) => {
+                let cellA = rowA.cells[indexOfColumn].innerText;
+                let cellB = rowB.cells[indexOfColumn].innerText;
+                return cellA.localeCompare(cellB);
+            });
+            if (event.target.classList.contains("desc") || event.target.classList.contains("fa-arrow-down")) {
+                for (let i = allRows.length - 1; i >= 0; i--) {
+                    tblBody.appendChild(allRows[i]);
+                }
+            }
+            else if (event.target.classList.contains("asc") || event.target.classList.contains("fa-arrow-up")) {
+                allRows.forEach(row => {
+                    tblBody.appendChild(row)
+                });
+
+            }
+            else if (event.target.classList.contains("unsort")) {
+                initialRows.forEach(row => {
+                    tblBody.appendChild(row)
+                });
+            }
+        });
+    }
+});
+
+window.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (!(e.target.closest("th"))) {
+        (document.querySelectorAll(".dropdown-menu")).forEach(element => {
+            element.style.display = (element.style.display === "flex") ? "none" : "";
+        });
+    }
+});
+
+// sorting related ends here.
+
+// let tblHeader = document.querySelector("thead");
+// let tblBody = document.querySelector("._tbody");
+
+// let allHeadersList = Array.from(tblHeader.querySelector("tr").children);
+
+// tblHeader.addEventListener("click", (e)=>{
+//     if(e.target === allHeadersList[0] || e.target === document.querySelector('#selectAllCheckbox')) {
+//         e.stopImmediatePropagation();
+//         return;
+//     }    
+//     let currentDropDown = e.target.closest("th").querySelector(".dropdown-menu");
+//     if(currentDropDown){
+//         ((e.target.closest("th")).querySelector(".dropdown-menu")).style.display = "flex";
+//         (document.querySelectorAll(".dropdown-menu")).forEach(element => {
+//             if((element.style.display === "flex") && (currentDropDown !== element)) {
+//                 element.style.display = "none";
+//             }
+//         });
+//         currentDropDown.addEventListener("click", (event)=>{            
+//             let allRows = Array.from(tblBody.rows);
+            
+//             let indexOfColumn = allHeadersList.indexOf(currentDropDown.closest("th"));
+//             allRows.sort((rowA, rowB)=>{
+//                  let cellA = rowA.cells[indexOfColumn].innerText;
+//                  let cellB = rowB.cells[indexOfColumn].innerText;
+//                  if(currentDropDown.closest("th").classList.contains("created-date")){
+//                     return new Date(cellA) - new Date(cellB);
+//                  }
+//                  else if(currentDropDown.closest("th").classList.contains("no-of-days")){
+                    
+//                  }
+//                  return cellA.localeCompare(cellB);
+//             });
+//             if(event.target.classList.contains("desc") || event.target.classList.contains("fa-arrow-down")){
+//                  for (let i = allRows.length-1; i>=0; i--) {
+//                      tblBody.appendChild(allRows[i]);
+//                  }
+//             }
+//             else if(event.target.classList.contains("asc") || event.target.classList.contains("fa-arrow-up")){
+//                  allRows.forEach(row => {
+//                      tblBody.appendChild(row)
+//                  });
+                 
+//             }
+//             else if(event.target.classList.contains("unsort")){
+//                  initialRows.forEach(row => {
+//                      tblBody.appendChild(row)
+//                  });
+//             }
+//          });
+//     }
+// });
+
+// window.addEventListener("click", (e)=>{
+//     // e.preventDefault();
+//     e.stopPropagation();
+//     if(!(e.target.closest("th"))){
+//         (document.querySelectorAll(".dropdown-menu")).forEach(element => {
+//             element.style.display = (element.style.display === "flex") ? "none" : "";
+//         });
+//     }
+// });
+
+// // sorting related ends here.

@@ -2,6 +2,106 @@ body {
     font-family: Arial, sans-serif;
     /* margin: 20px; */
   }
+
+  
+.filter-icon {
+  display: inline-block;
+  height: 28px;
+  width: 30px;
+  font-size: 18px;
+  padding: 5px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.filter-icon .icon {
+  padding: 5px;
+  color: #0061CA;
+}
+
+.filter-div {
+  transform: scaleY(1);
+  height: max-content;
+  width: 100%;
+  background: #f5f7fc;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  transform-origin: top;
+  opacity: 1;
+  position: relative;
+}
+
+.filter-div.hidden {
+  transform: scaleY(0);
+  opacity: 0;
+  height: 0;
+  padding: 0;
+  position: absolute;
+  visibility: hidden;
+}
+
+.filter-div th {
+  border-collapse: collapse;
+  border: none;
+  background: #f5f7fc !important;
+  vertical-align: top;
+  padding: 10px 0px;
+}
+
+.filter-div th input {
+  height: 20px;
+  width: 250px;
+  padding: 5px 10px;
+  font-size: 14px;
+  color: #333;
+  outline: 0;
+  border: 1px solid #333;
+  border-radius: 5px;
+  background-color: #f5f7fc;
+}
+
+.filter-div th select {
+  padding: 6px;
+  background-color: #f5f7fc;
+  color: #333;
+  font-size: 14px;
+  font-weight: normal;
+  border-radius: 5px;
+  width: max-content;
+  outline: 0;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.filter-div th select option {
+  text-align: left;
+  padding: 8px;
+  background-color: #f5f7fc;
+  color: #333;
+  font-size: 14px;
+  font-weight: normal;
+}
+
+
+#cta-filter,
+#cta-clear-filter {
+  width: max-content;
+  padding: 5px 16px;
+  cursor: pointer;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: white;
+  outline: 0;
+  border-color: #007bff;
+  align-self: flex-end;
+  margin-bottom: 10px;
+}
+
+#cta-filter:hover,
+#cta-clear-filter:hover {
+  border-color: #0056b3;
+  background-color: #0056b3;
+}
   
   table {
     width: 100%;
@@ -23,6 +123,17 @@ body {
     background-color: #f9f9f9;
   }
   
+     /* Sorting Related Code starts here */
+     .tbl-hdr-inner-container{
+      display: flex;
+      justify-content: space-between;
+     }
+     .dropdown-menu{
+      display: none;
+     }
+     /* --End-- */
+
+     
   .comments-section {
     margin-bottom: 20px;
   }
@@ -308,13 +419,22 @@ margin-bottom: 15px;
   }
 
 /* Styling for the select box container */
+/* Sakthi's Code */
 #moduleContainer {
   /* width: 20%; */
   /* margin: 10px 0; */
   height: 35px;
   width: 10%;
-
+  transform: scaleX(1);
+  transform-origin: left;
+  transition: all 0.3s ease;
 }
+
+#moduleContainer.disabled {
+  transform: scaleX(0);
+}
+
+/* Sakthi's Code  end */
 /* toast  */
 /* #toast-container > .toast {
   transition: opacity 0.5s ease-out !important; 
@@ -690,7 +810,7 @@ button.delegate-btn:hover {
   background: #fff;
   border: 1px solid #ccc;
   padding: 10px;
-  width: max-content;
+  width: max-content; 
   max-width: 300px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   font-size: 13px;
@@ -716,4 +836,31 @@ button.delegate-btn:hover {
 .criteria-popover:hover {
   display: block;
 }
+
+
+/* Sorting Related Style starts here. */
+.dropdown-menu {
+  display: none; /* Hidden by default */
+  position: absolute;
+  z-index: 7;
+  flex-direction: column;
+  width: fit-content;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 8px;
+  list-style: none;
+  border-radius: 3px;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+  margin-right: 0;
+}
+
+.dropdown-menu li {
+  padding: 5px;
+  cursor: pointer;
+}
+
+.dropdown-menu li:hover {
+  background: #f0f0f0;
+}
+/* Sorting Related Style Ends here */
 

@@ -8,6 +8,9 @@
   <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
     integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
     crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
@@ -22,31 +25,161 @@
 <body>
   <h3 id="title">Bulk Record Approval</h3>
   <div class="top">
-    <input type="text" id="searchBar" placeholder="Search">
+    <!-- <input type="text" id="searchBar" placeholder="Search"> -->
+    <span class="filter-icon"><i class="fa-solid fa-filter icon" id="filter-icon"></i></span>
     <div id="moduleContainer">
       <select id="module" class="selectbox">
       </select>
       <div id="selected-module-display" class="selected-modules" style="display: none;"></div>
-  </div>
+    </div>
   </div>
 
   <table>
     <thead>
       <tr>
         <th><input type="checkbox" id="selectAllCheckbox" /></th>
-        <th id="recordNameHeader">Record Name</th>
-        <th id="approvalProcessNameHeader">Approval Process Name</th>
-        <th id="moduleIdHeader">Module</th>
-        <th id="moduleIdHeader">Criteria</th>
-        <th id="dateCreatedBy">Date Created</th>
-        <th id="dateCreatedBy">No of days Waiting</th>
+        <th id="recordNameHeader">
+          <div class="tbl-hdr-inner-container">
+            <span class="tbl-heading">Record Name</span>
+            <span class="menu-bar"><i class="fa-solid fa-bars"></i>
+              <ul class="dropdown-menu">
+                <li class="asc">asc <i class="fa-solid fa-arrow-up"></i></li>
+                <li class="desc">desc <i class="fa-solid fa-arrow-down"></i></li>
+                <li class="unsort">unsort</li>
+              </ul>
+            </span>
+          </div>
+        </th>
+        <th id="approvalProcessNameHeader">
+          <div class="tbl-hdr-inner-container">
+            <span class="tbl-heading">Approval Process Name</span>
+            <span class="menu-bar"><i class="fa-solid fa-bars"></i>
+              <ul class="dropdown-menu">
+                <li class="asc">asc <i class="fa-solid fa-arrow-up"></i></li>
+                <li class="desc">desc <i class="fa-solid fa-arrow-down"></i></li>
+                <li class="unsort">unsort</li>
+              </ul>
+            </span>
+          </div>
+        </th>
+        <th id="moduleIdHeader">
+          <div class="tbl-hdr-inner-container">
+            <span class="tbl-heading">Module</span>
+            <span class="menu-bar"><i class="fa-solid fa-bars"></i>
+              <ul class="dropdown-menu">
+                <li class="asc">asc <i class="fa-solid fa-arrow-up"></i></li>
+                <li class="desc">desc <i class="fa-solid fa-arrow-down"></i></li>
+                <li class="unsort">unsort</li>
+              </ul>
+            </span>
+          </div>
+        </th>
+        <th id="criteriaHeader" class="criteria-Header">
+          <div class="tbl-hdr-inner-container">
+            <span class="tbl-heading">Criteria</span>
+            <span class="menu-bar"><i class="fa-solid fa-bars"></i>
+              <ul class="dropdown-menu">
+                <li class="asc">asc <i class="fa-solid fa-arrow-up"></i></li>
+                <li class="desc">desc <i class="fa-solid fa-arrow-down"></i></li>
+                <li class="unsort">unsort</li>
+              </ul>
+            </span>
+          </div>
+        </th>
+        <th id="dateCreatedBy" class="created-date">
+          <div class="tbl-hdr-inner-container">
+            <span class="tbl-heading">Created Date</span>
+            <span class="menu-bar"><i class="fa-solid fa-bars"></i>
+              <ul class="dropdown-menu">
+                <li class="asc">asc <i class="fa-solid fa-arrow-up"></i></li>
+                <li class="desc">desc <i class="fa-solid fa-arrow-down"></i></li>
+                <li class="unsort">unsort</li>
+              </ul>
+            </span>
+          </div>
+        </th>
+        <th id="dateCreatedBy" class="no-of-days">
+          <div class="tbl-hdr-inner-container">
+            <span class="tbl-heading">No. of days</span>
+            <span class="menu-bar"><i class="fa-solid fa-bars"></i>
+              <ul class="dropdown-menu">
+                <li class="asc">asc <i class="fa-solid fa-arrow-up"></i></li>
+                <li class="desc">desc <i class="fa-solid fa-arrow-down"></i></li>
+                <li class="unsort">unsort</li>
+              </ul>
+            </span>
+          </div>
+        </th>
         <th id="action">Action</th>
-        <th id="statusHeader">Status</th>
+        <th id="statusHeader" class="tbl-header">
+          <div class="tbl-hdr-inner-container"><span class="tbl-heading">status</span> <span class="menu-bar"><i
+                class="fa-solid fa-bars"></i></span></div>
+          <ul class="dropdown-menu">
+            <li class="asc">asc <i class="fa-solid fa-arrow-up"></i></li>
+            <li class="desc">desc <i class="fa-solid fa-arrow-down"></i></li>
+            <li class="unsort">unsort</li>
+          </ul>
+        </th>
+      </tr>
+      <tr class="filter-div hidden">
+        <th></th>
+        <th class="th filter"><select name="record-name-filter" id="record-name-filter">
+            <option value="equals">contains</option>
+            <option value="not_equals">doesn't contains</option>
+            <option value="starts_with">starts with</option>
+            <option value="is">is</option>
+          </select><br>
+          <input type="text" id="record-name-filter-input">
+        </th>
+        <th></th>
+        <th>
+          <!-- <select name="module-filter" id="module-filter">
+                  <option value="in">is</option>
+                  <option value="not-in">isn't</option>
+                </select> -->
+          <select name="modules" id="modules-list"></select>
+        </th>
+        <th>
+        </th>
+        <th class="th filter">
+          <!-- <select name="action-filter" id="action-filter">
+                  <option value="false">Waiting For Approval</option>
+                  <option value="true">Approved</option>
+                  <option value="both">Both</option>
+                </select> -->
+          <button type="button" id="cta-filter">Search</button>
+          <button type="button" id="cta-clear-filter">clear</button>
+        </th>
+        <th></th>
+        <th></th>
+        <th></th>
       </tr>
     </thead>
     <tbody class="_tbody">
     </tbody>
   </table>
+    <!-- </thead>
+    <tbody class="_tbody">
+    </tbody>
+  </table> -->
+
+  <!-- <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="selectAllCheckbox" /></th>
+          <th id="recordNameHeader">Record Name</th>
+          <th id="approvalProcessNameHeader">Approval Process Name</th>
+          <th id="moduleIdHeader">Module</th>
+          <th id="criteriaHeader">Criteria</th>
+          <th id="dateCreatedBy">Date Created</th>
+          <th id="dateCreatedBy">No of days Waiting</th>
+          <th id="action">Action</th>
+          <th id="statusHeader">Status</th>
+        </tr>
+      </thead>
+      <tbody class="_tbody">
+      </tbody>
+    </table> -->
 
   <div id="approvalRejectPopup" class="popup">
     <div class="popup_content">
@@ -76,20 +209,20 @@
         </div>
       </div>
 
-      
+
       <div id="delegateSection" style="display:none;">
         <label for="userSelect">Users</label>
         <select id="userSelect">
           <!-- Populate this list dynamically with users -->
         </select>
       </div>
-      
+
       <!-- Comment box (for both Approve and Reject) -->
       <div id="commentSection">
         <label for="comment">Comment</label>
         <textarea id="comment" placeholder="Add your comments here (Optional)"></textarea>
       </div>
-      
+
       <div class="buttons">
         <button id="cancelPopupBtn">Cancel</button>
         <button id="submitActionBtn">Submit</button>
