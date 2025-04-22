@@ -605,11 +605,13 @@ function updateSelectAllCheckboxState() {
 }
 
 document.querySelector('tbody').addEventListener('change', function (event) {
+    event.preventDefault();
     if (event.target.type === 'checkbox') {
         const recordId = event.target.dataset.id;
         // Add or remove the record from selectedRecords based on checkbox state
         if (event.target.checked) {
             ZAGlobal.selectedRecords.push(recordId);
+     
         } else {
             const index = ZAGlobal.selectedRecords.indexOf(recordId);
             if (index > -1) {
@@ -618,12 +620,13 @@ document.querySelector('tbody').addEventListener('change', function (event) {
         }
 
         ZAGlobal.reRenderTableBody();
-        updateSelectAllCheckboxState(); // Update "Select All" checkbox state after a change
+        updateSelectAllCheckboxState(); 
     }
 });
 
 // Event listener for "Select All" checkbox
 document.querySelector('#selectAllCheckbox').addEventListener('change', function (event) {
+    event.preventDefault();
     const isChecked = event.target.checked;
     const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]:not(:disabled)');
 
@@ -892,8 +895,6 @@ document.addEventListener('mouseover', function (e) {
 
 // Sorting Related Works - Starts
 
-
-
 let tblHeader = document.querySelector("thead");
 let tblBody = document.querySelector("._tbody");
 let allHeadersList = Array.from(tblHeader.querySelectorAll("tr")[0].children);
@@ -913,8 +914,6 @@ tblHeader.addEventListener("click", (e) => {
                 element.style.display = "none";
             }
         });
-
-
 
         currentDropDown.addEventListener("click", (event) => {
             console.log(currentDropDown);
@@ -947,77 +946,12 @@ tblHeader.addEventListener("click", (e) => {
 });
 
 window.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (!(e.target.closest("th"))) {
-        (document.querySelectorAll(".dropdown-menu")).forEach(element => {
+    const isInsideTh = e.target.closest("th");
+    if (!isInsideTh) {
+        document.querySelectorAll(".dropdown-menu").forEach(element => {
             element.style.display = (element.style.display === "flex") ? "none" : "";
         });
     }
 });
 
 // sorting related ends here.
-
-// let tblHeader = document.querySelector("thead");
-// let tblBody = document.querySelector("._tbody");
-
-// let allHeadersList = Array.from(tblHeader.querySelector("tr").children);
-
-// tblHeader.addEventListener("click", (e)=>{
-//     if(e.target === allHeadersList[0] || e.target === document.querySelector('#selectAllCheckbox')) {
-//         e.stopImmediatePropagation();
-//         return;
-//     }    
-//     let currentDropDown = e.target.closest("th").querySelector(".dropdown-menu");
-//     if(currentDropDown){
-//         ((e.target.closest("th")).querySelector(".dropdown-menu")).style.display = "flex";
-//         (document.querySelectorAll(".dropdown-menu")).forEach(element => {
-//             if((element.style.display === "flex") && (currentDropDown !== element)) {
-//                 element.style.display = "none";
-//             }
-//         });
-//         currentDropDown.addEventListener("click", (event)=>{            
-//             let allRows = Array.from(tblBody.rows);
-            
-//             let indexOfColumn = allHeadersList.indexOf(currentDropDown.closest("th"));
-//             allRows.sort((rowA, rowB)=>{
-//                  let cellA = rowA.cells[indexOfColumn].innerText;
-//                  let cellB = rowB.cells[indexOfColumn].innerText;
-//                  if(currentDropDown.closest("th").classList.contains("created-date")){
-//                     return new Date(cellA) - new Date(cellB);
-//                  }
-//                  else if(currentDropDown.closest("th").classList.contains("no-of-days")){
-                    
-//                  }
-//                  return cellA.localeCompare(cellB);
-//             });
-//             if(event.target.classList.contains("desc") || event.target.classList.contains("fa-arrow-down")){
-//                  for (let i = allRows.length-1; i>=0; i--) {
-//                      tblBody.appendChild(allRows[i]);
-//                  }
-//             }
-//             else if(event.target.classList.contains("asc") || event.target.classList.contains("fa-arrow-up")){
-//                  allRows.forEach(row => {
-//                      tblBody.appendChild(row)
-//                  });
-                 
-//             }
-//             else if(event.target.classList.contains("unsort")){
-//                  initialRows.forEach(row => {
-//                      tblBody.appendChild(row)
-//                  });
-//             }
-//          });
-//     }
-// });
-
-// window.addEventListener("click", (e)=>{
-//     // e.preventDefault();
-//     e.stopPropagation();
-//     if(!(e.target.closest("th"))){
-//         (document.querySelectorAll(".dropdown-menu")).forEach(element => {
-//             element.style.display = (element.style.display === "flex") ? "none" : "";
-//         });
-//     }
-// });
-
-// // sorting related ends here.
