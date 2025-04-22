@@ -295,6 +295,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
                         ZAGlobal.processedRecords.push(delegatedRecord);
                         ZAGlobal.waitingRecords = ZAGlobal.waitingRecords.filter(r => r.entity.id !== res.details.id);
                         ZAGlobal.filteredRecords = ZAGlobal.filteredRecords.filter(r => r.entity.id !== res.details.id);
+                        ZAGlobal.allRecords = ZAGlobal.allRecords.filter(r => r.entity.id !== res.details.id);
                         ZAGlobal.reRenderTableBody();
                     }
                     // console.log("Delegate response:", res); // Log the response for delegation
@@ -321,6 +322,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
 
                     ZAGlobal.waitingRecords = ZAGlobal.waitingRecords.filter(r => r.entity.id !== res.details.id);
                     ZAGlobal.filteredRecords = ZAGlobal.filteredRecords.filter(r => r.entity.id !== res.details.id);
+                    ZAGlobal.allRecords = ZAGlobal.allRecords.filter(r => r.entity.id !== res.details.id);
                     ZAGlobal.reRenderTableBody();
                 }
 
