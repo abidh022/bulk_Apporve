@@ -9,12 +9,23 @@ var ZAGlobal = {
     currentPage: 1,
     totalPages: 0,
 
-    reRenderTableBody: function () {
+    reRenderTableBody: async function () {
         $('._tbody').empty();
         var tbody = '';
 
-        if (ZAGlobal.filteredRecords.length === 0 && ZAGlobal.processedRecords.length === 0) {
-            $('._tbody').html('<tr><td colspan="9">No records available to approve/reject.</td></tr>');
+        if (!ZAGlobal.domainName || !ZAGlobal.orgId) {
+            try {
+                const orgInfo = await ZOHO.CRM.CONFIG.getOrgInfo();
+                ZAGlobal.domainName = orgInfo.org[0].country_code || 'in';
+                ZAGlobal.orgId = orgInfo.org[0].domain_name;
+            } catch (error) {
+                ZAGlobal.triggerToast('Unable to fetch organization info.', 3000, 'error');
+                return;
+            }
+        }
+
+        if (ZAGlobal.filteredRecords.length === 0) {
+            $('._tbody').html('<tr><td colspan="8">No records available to approve/reject.</td></tr>');
         } else {
             // Apply pagination
             var startIndex = (ZAGlobal.currentPage - 1) * ZAGlobal.recordsPerPage;
@@ -40,10 +51,9 @@ var ZAGlobal = {
 
                 tbody += `<tr data-id="${record.entity.id}" data-module="${record.module}">
                             <td><input type="checkbox" data-id="${record.entity.id}" data-module="${record.module}" ${ZAGlobal.selectedRecords.includes(record.entity.id) ? 'checked' : ''}></td>
-                            <td>${record.entity.name}</td>
+                            <td><a href= "https://crm.zoho.${ZAGlobal.domainName}/crm/${ZAGlobal.orgId}/tab/${record.module}/${record.entity.id}" target="_blank" class="record-link">${record.entity.name}</a></td>
                             <td>${record.rule.name}</td>
                             <td>${record.module}</td>
-                            <td>${record.criteria_statements || 'N/A'}</td>
                             <td>${formattedDate}</td>
                             <td>${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago</td>
                                 <td>
@@ -56,62 +66,30 @@ var ZAGlobal = {
                 // console.log(record);
             });
 
-            ZAGlobal.processedRecords.forEach(function (record) {
-                var initiatedTime = new Date(record.initiated_time);
-                var currentTime = new Date();
-                var timeDiff = currentTime - initiatedTime;
-                var daysAgo = Math.floor(timeDiff / (1000 * 3600 * 24));
-                var options = {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                };
-                var formattedDate = initiatedTime.toLocaleString('en-IN', options);
-
-                tbody += `<tr data-id="${record.entity.id}" data-module="${record.module}">
-                            <td><input type="checkbox" data-id="${record.entity.id}" data-module="${record.module}" ${ZAGlobal.selectedRecords.includes(record.entity.id) ? '' : ''} disabled class="disabled-checkbox"></td>
-                            <td>${record.entity.name}</td>
-                            <td>${record.rule.name}</td>
-                            <td>${record.module}</td>
-                            <td>${record.criteria_statements || 'N/A'}</td>
-                            <td>${formattedDate}</td>
-                            <td>${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago</td>
-                            <td>
-                                <button class="approve-btn" data-id="${record.entity.id}" disabled>Approve</button>
-                                <button class="delegate-btn" data-id="${record.entity.id}" disabled>Delegate</button>
-                                <button class="reject-btn" data-id="${record.entity.id}" disabled>Reject</button>   
-                            </td>
-                            <td>${record.is_approved ? 'Approved' : record.is_rejected ? 'Rejected' : record.is_delegated ? 'Delegated' : 'Waiting for approval'}</td>
-                            </tr>`;
-            });
 
             $('._tbody').append(tbody);
         }
         ZAGlobal.updatePagination();
         resetHeaderCheckbox();
-          // Sorting related.
-          let initialTBody = document.querySelector("._tbody");
-          initialRows = Array.from(initialTBody.rows);
-          //sorting related
-
+        updateSelectedCount();
+        updateSelectAllCheckboxState();
+        // Sorting related.
+        let initialTBody = document.querySelector("._tbody");
+        initialRows = Array.from(initialTBody.rows);
     },
 
     updatePagination: function () {
         var totalRecords = ZAGlobal.filteredRecords.length;
         ZAGlobal.totalPages = Math.ceil(totalRecords / ZAGlobal.recordsPerPage);
 
-        var paginationHtml = `
+        var paginationHtml = `No of records
             <select id="recordsPerPage">
-                <option value="10" ${ZAGlobal.recordsPerPage === 10 ? 'selected' : ''}>10 Records per page</option>
-                <option value="20" ${ZAGlobal.recordsPerPage === 20 ? 'selected' : ''}>20 Records per page</option>
-                <option value="30" ${ZAGlobal.recordsPerPage === 30 ? 'selected' : ''}>30 Records per page</option>
-                <option value="40" ${ZAGlobal.recordsPerPage === 40 ? 'selected' : ''}>40 Records per page</option>
-                <option value="50" ${ZAGlobal.recordsPerPage === 50 ? 'selected' : ''}>50 Records per page</option>
-                <option value="100" ${ZAGlobal.recordsPerPage === 100 ? 'selected' : ''}>100 Records per page</option>
+                <option value="10" ${ZAGlobal.recordsPerPage === 10 ? 'selected' : ''}>10 </option>
+                <option value="20" ${ZAGlobal.recordsPerPage === 20 ? 'selected' : ''}>20 </option>
+                <option value="30" ${ZAGlobal.recordsPerPage === 30 ? 'selected' : ''}>30 </option>
+                <option value="40" ${ZAGlobal.recordsPerPage === 40 ? 'selected' : ''}>40 </option>
+                <option value="50" ${ZAGlobal.recordsPerPage === 50 ? 'selected' : ''}>50 </option>
+                <option value="100" ${ZAGlobal.recordsPerPage === 100 ? 'selected' : ''}>100 </option>
             </select>
             <button id="prevPageBtn" ${ZAGlobal.currentPage === 1 ? 'disabled' : ''}></button>
             <span>${ZAGlobal.currentPage} - ${ZAGlobal.totalPages}</span>
@@ -124,7 +102,7 @@ var ZAGlobal = {
     bindPaginationEvents: function () {
         $('#recordsPerPage').on('change', function () {
             ZAGlobal.recordsPerPage = parseInt(this.value);
-            ZAGlobal.currentPage = 1;
+            ZAGlobal.currentPage = 1; ``
             ZAGlobal.reRenderTableBody();
         });
 
@@ -174,11 +152,11 @@ async function populateUserList() {
         });
 
     } catch (error) {
-        console.log('Error fetching users:', error);
         ZAGlobal.triggerToast('Failed to fetch user list. Please try again later.', 3000, 'warning');
     }
 }
 
+let boundSubmitHandler;
 ZAGlobal.buttonAction = async function (action, recordId = null) {
     // console.log(`Action: ${action} for Record id ${recordId}`);     
 
@@ -211,9 +189,43 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
     document.getElementById('otherReasonContainer').style.display = 'none';
     document.getElementById('submitActionBtn').textContent = action === 'approve' ? 'Approve' : action === 'reject' ? 'Reject' : 'Delegate';
 
+    //For Popup button style color change
+
+    const submitBtn = document.getElementById('submitActionBtn');
+
+    // Set text
+    submitBtn.textContent = action === 'approve' ? 'Approve' : action === 'reject' ? 'Reject' : 'Delegate';
+
+    // Reset previous styles
+    submitBtn.classList.remove('approve-style', 'reject-style', 'delegate-style');
+
+    // Apply new style based on action
+    if (action === 'approve') {
+        submitBtn.classList.add('approve-style');
+    } else if (action === 'reject') {
+        submitBtn.classList.add('reject-style');
+    } else if (action === 'delegate') {
+        submitBtn.classList.add('delegate-style');
+    }
+    // const submitBtn = document.getElementById('submitActionBtn');
+    // const actionMap = {
+    //     approve: { text: 'Approve', class: 'approve-style' },
+    //     reject: { text: 'Reject', class: 'reject-style' },
+    //     delegate: { text: 'Delegate', class: 'delegate-style' }
+    // };
+    // submitBtn.textContent = actionMap[action].text;
+    // submitBtn.className = actionMap[action].class;
+
     const submitButton = document.getElementById('submitActionBtn');
     submitButton.removeEventListener('click', handleSubmitAction);
-    submitButton.addEventListener('click', () => handleSubmitAction(recordsToProcess, action));
+
+    if (boundSubmitHandler) {
+        submitButton.removeEventListener('click', boundSubmitHandler);
+    }
+
+    boundSubmitHandler = () => handleSubmitAction(recordsToProcess, action);
+    submitButton.addEventListener('click', boundSubmitHandler);
+    // submitButton.addEventListener('click', () => handleSubmitAction(recordsToProcess, action));
 
     if (action !== 'delegate') {
         document.getElementById('delegateSection').style.display = 'none';
@@ -235,7 +247,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
 
     // Handle the Cancel button to close the popup
     document.getElementById('cancelPopupBtn').addEventListener('click', () => {
-        document.getElementById('approvalRejectPopup').style.display = 'none';
+        // document.getElementById('approvalRejectPopup').style.display = 'none';
         recordsToProcess = [];
     });
 
@@ -285,46 +297,31 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
             };
 
             try {
-                let res;
-                if (action === 'delegate') {
-                    res = await ZOHO.CRM.API.approveRecord(config);
-                    delegatedRecordsCount++;
-                    const delegatedRecord = ZAGlobal.waitingRecords.find(r => r.entity.id === res.details.id);
-                    if (delegatedRecord) {
-                        delegatedRecord.is_delegated = true;
-                        ZAGlobal.processedRecords.push(delegatedRecord);
-                        ZAGlobal.waitingRecords = ZAGlobal.waitingRecords.filter(r => r.entity.id !== res.details.id);
-                        ZAGlobal.filteredRecords = ZAGlobal.filteredRecords.filter(r => r.entity.id !== res.details.id);
-                        ZAGlobal.allRecords = ZAGlobal.allRecords.filter(r => r.entity.id !== res.details.id);
-                        ZAGlobal.reRenderTableBody();
-                    }
-                    // console.log("Delegate response:", res); // Log the response for delegation
-                } else {
-                    res = await ZOHO.CRM.API.approveRecord(config);
-                    if (action === 'approve') {
-                        approvedRecordsCount++;
-                    } else if (action === 'reject') {
-                        rejectedRecordsCount++;
-                    }
-                    // console.log("Approve/Reject response:", res); 
-                }
+                const res = await ZOHO.CRM.API.approveRecord(config);
 
-                if (!res || res.code !== 'SUCCESS') {
-                    throw new Error(`Error processing the record. Response code: ${res.code}`);
-                }
+            if (!res || res.code !== 'SUCCESS') {
+                console.error(`Failed for record ${record.entity.id}`, res);
+                continue; // Skip processing this record
+            }
 
-                const record = ZAGlobal.waitingRecords.find(r => r.entity.id === res.details.id);
-                if (record) {
-                    record.is_approved = action === 'approve';
-                    record.is_rejected = action === 'reject';
+            // Update count only on success
+            if (action === 'approve') approvedRecordsCount++;
+            else if (action === 'reject') rejectedRecordsCount++;
+            else if (action === 'delegate') delegatedRecordsCount++;
 
-                    ZAGlobal.processedRecords.push(record);
+            const updatedRecord = ZAGlobal.waitingRecords.find(r => r.entity.id === res.details.id);
+            if (updatedRecord) {
+                updatedRecord.is_approved = action === 'approve';
+                updatedRecord.is_rejected = action === 'reject';
+                updatedRecord.is_delegated = action === 'delegate';
 
-                    ZAGlobal.waitingRecords = ZAGlobal.waitingRecords.filter(r => r.entity.id !== res.details.id);
-                    ZAGlobal.filteredRecords = ZAGlobal.filteredRecords.filter(r => r.entity.id !== res.details.id);
-                    ZAGlobal.allRecords = ZAGlobal.allRecords.filter(r => r.entity.id !== res.details.id);
-                    ZAGlobal.reRenderTableBody();
-                }
+                // Remove from all relevant arrays
+                ZAGlobal.processedRecords.push(updatedRecord);
+                ZAGlobal.waitingRecords = ZAGlobal.waitingRecords.filter(r => r.entity.id !== res.details.id);
+                ZAGlobal.filteredRecords = ZAGlobal.filteredRecords.filter(r => r.entity.id !== res.details.id);
+                ZAGlobal.allRecords = ZAGlobal.allRecords.filter(r => r.entity.id !== res.details.id);
+                ZAGlobal.selectedRecords = ZAGlobal.selectedRecords.filter(id => id !== res.details.id);
+            }
 
             } catch (error) {
                 console.log("Error in API call:", error);
@@ -332,20 +329,21 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
             }
         }
 
-        if (action === 'approve') {
-            toastMessage = `${approvedRecordsCount} records were approved`;
-        } else if (action === 'reject') {
-            toastMessage = `${rejectedRecordsCount} records were rejected`;
-        } else if (action === 'delegate') {
-            toastMessage = `${delegatedRecordsCount} records were delegated`;
-        }
+    let toastMessage = '';
+    if (action === 'approve') {
+        toastMessage = `${approvedRecordsCount} record${approvedRecordsCount === 1 ? '' : 's'} ${approvedRecordsCount === 1 ? 'was' : 'were'} approved`;
+    } else if (action === 'reject') {
+        toastMessage = `${rejectedRecordsCount} record${rejectedRecordsCount === 1 ? '' : 's'} ${rejectedRecordsCount === 1 ? 'was' : 'were'} rejected`;
+    } else if (action === 'delegate') {
+        toastMessage = `${delegatedRecordsCount} record${delegatedRecordsCount === 1 ? '' : 's'} ${delegatedRecordsCount === 1 ? 'was' : 'were'} delegated`;
+    }
+    
 
-        ZAGlobal.triggerToast(toastMessage, 3000, action === 'approve' ? 'success' : action === 'reject' ? 'error' : 'info');
-
+    if (approvedRecordsCount || rejectedRecordsCount || delegatedRecordsCount) {
         document.getElementById('approvalRejectPopup').style.display = 'none';
         ZAGlobal.reRenderTableBody();
-        recordsToProcess = [];
-    }
+        ZAGlobal.triggerToast(toastMessage, 3000, action === 'approve' ? 'success' : action === 'reject' ? 'error' : 'info');
+    }}
 }
 
 $(document).on('click', '.approve-btn', function () {
@@ -373,8 +371,10 @@ let currentToast = null;
 ZAGlobal.triggerToast = function (message, duration = 1000, type = 'info') {
 
     if (currentToast) {
-        currentToast.hideToast();
+        currentToast.toastElement.remove();
+        currentToast = null;
     }
+
     const backgroundColor = (type === 'warning') ? '#FFA500' :
         (type === 'success') ? '#4CAF50' :
             (type === 'error') ? '#F44336' : '#2196F3';
@@ -385,7 +385,7 @@ ZAGlobal.triggerToast = function (message, duration = 1000, type = 'info') {
         gravity: "top",
         position: "center",
         stopOnFocus: true,
-        backgroundColor: backgroundColor,
+        backgroundColor,
         // close: true, 
         transition: "linear",
         onClick: function () { }
@@ -401,9 +401,10 @@ ZOHO.embeddedApp.on("PageLoad", function (data) {
             ZAGlobal.filteredRecords = toBeApproved.data;
             ZAGlobal.allRecords = [...toBeApproved.data];
             ZAGlobal.waitingRecords = [...toBeApproved.data];
-            await ZAGlobal.fetchAllCriteria();
 
             ZAGlobal.reRenderTableBody();
+            // console.log(ZAGlobal.allRecords.length);
+            document.getElementById('totalRecordsCount').innerHTML = "Total Records : <strong>" + ZAGlobal.allRecords.length + "</strong>";
         })
         .catch(function (error) {
             console.log('Error fetching records:', error);
@@ -416,54 +417,6 @@ ZOHO.embeddedApp.on("PageLoad", function (data) {
     });
     filterRecords()
 });
-
-async function filterRecords() {
-    let filtered_flag = false;
-    let Module = document.getElementById('modules-list');
-    let searchKey = document.getElementById('record-name-filter-input');
-    let recordName_filter_type = document.getElementById('record-name-filter');
-    document.getElementById('cta-filter').addEventListener('click', async (e) => {
-        e.preventDefault();
-        let res = await ZOHO.CRM.API.getApprovalRecords({ type: "awaiting" });
-        let data = res.data;
-        if (searchKey.value == '') {
-            ZAGlobal.triggerToast('Enter a key to search', 1000, 'info');
-            searchKey.focus();
-            return;
-        }
-
-        switch (recordName_filter_type.value) {
-            case 'equals':
-                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase().includes(searchKey.value))));
-                break;
-            case 'not_equals':
-                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (!rec.entity.name.toLowerCase().includes(searchKey.value))))
-                break;
-            case 'starts_with':
-                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase().startsWith(searchKey.value))))
-                break;
-            case 'is':
-                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase() === searchKey.value.toLowerCase())))
-                break;
-            default:
-                console.log('default case');
-                break;
-        }
-        filtered_flag = true;
-        ZAGlobal.reRenderTableBody();
-    })
-    document.getElementById('cta-clear-filter').addEventListener('click', (e) => {
-        e.preventDefault();
-        if (filtered_flag) {
-            filtered_flag = false;
-            searchKey.value = '';
-            ZAGlobal.filteredRecords = ZAGlobal.allRecords;
-            ZAGlobal.reRenderTableBody();
-        } else {
-            ZAGlobal.triggerToast('Nothing to Clear! No Filter Applied', 1000, 'info');
-        }
-    })
-}
 
 
 // Display the active Modules  
@@ -519,26 +472,20 @@ function handleModuleSelection() {
 }
 
 // Function to filter records based on the selected module
-function filterRecordsByModule(selectedModule) {
-    if (!selectedModule || selectedModule === 'AllModules') {
-        ZAGlobal.filteredRecords = ZAGlobal.allRecords;
-    } else {
-        ZAGlobal.filteredRecords = ZAGlobal.allRecords.filter(record => record.module === selectedModule);
-    }
-    ZAGlobal.reRenderTableBody();
-}
+// function filterRecordsByModule(selectedModule) {
+//     if (!selectedModule || selectedModule === 'AllModules') {
+//         ZAGlobal.filteredRecords = ZAGlobal.allRecords;
+//     } else {
+//         ZAGlobal.filteredRecords = ZAGlobal.allRecords.filter(record => record.module === selectedModule);
+//     }
+//     ZAGlobal.reRenderTableBody();
+// }
 
-// Initialize the module selection behavior
-function initializeModuleSelection(modules) {
-    populateModules(modules);
-    $('#module').on('change', handleModuleSelection);
-}
-
-document.getElementById('filter-icon').addEventListener('click', (e) => {
-    e.preventDefault();
-    document.querySelector('#moduleContainer').classList.toggle('disabled');
-    document.querySelector('.filter-div').classList.toggle('hidden');
-})
+// Initialize the module selection behavior 
+// function initializeModuleSelection(modules) {
+//     populateModules(modules);
+//     $('#module').on('change', handleModuleSelection);
+// }
 
 
 ZAGlobal.selectAll = function () {
@@ -613,7 +560,7 @@ document.querySelector('tbody').addEventListener('change', function (event) {
         // Add or remove the record from selectedRecords based on checkbox state
         if (event.target.checked) {
             ZAGlobal.selectedRecords.push(recordId);
-     
+
         } else {
             const index = ZAGlobal.selectedRecords.indexOf(recordId);
             if (index > -1) {
@@ -622,7 +569,8 @@ document.querySelector('tbody').addEventListener('change', function (event) {
         }
 
         ZAGlobal.reRenderTableBody();
-        updateSelectAllCheckboxState(); 
+        updateSelectAllCheckboxState();
+        updateSelectedCount(); 
     }
 });
 
@@ -648,6 +596,7 @@ document.querySelector('#selectAllCheckbox').addEventListener('change', function
 
     ZAGlobal.reRenderTableBody();
     updateSelectAllCheckboxState();
+    updateSelectedCount();
 });
 
 function processAction(action, recordIds) {
@@ -658,6 +607,7 @@ function processAction(action, recordIds) {
     resetHeaderCheckbox();
     ZAGlobal.reRenderTableBody();
     updateSelectAllCheckboxState();
+    updateSelectedCount();
 
 }
 
@@ -682,25 +632,45 @@ function resetHeaderCheckbox() {
     selectAllCheckbox.indeterminate = false;
 }
 
-//To send the selected data to the selected record
-document.querySelector('tbody').addEventListener('change', function (event) {
-    if (event.target.type === 'checkbox') {
-        const recordId = event.target.dataset.id;
-        if (event.target.checked) {
-            ZAGlobal.selectedRecords.push(recordId);
-        } else {
-            const index = ZAGlobal.selectedRecords.indexOf(recordId);
-            if (index > -1) {
-                ZAGlobal.selectedRecords.splice(index, 1);
-            }
-        }
+function updateSelectedCount() {
+    const count = ZAGlobal.selectedRecords.length;
 
-        ZAGlobal.reRenderTableBody();
-        const rowCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
-        const headerCheckbox = document.querySelector('#selectAllCheckbox');
-        updateHeaderCheckboxState(rowCheckboxes, headerCheckbox);
+    let counterElement = document.getElementById('selectedCounter');
+
+    if (!counterElement) {
+        counterElement = document.createElement('div');
+        counterElement.id = 'selectedCounter';
+        document.querySelector('#selectedRecordsCount')?.prepend(counterElement); 
     }
-});
+
+    if (count > 0) {
+        counterElement.textContent = `${count} Record${count > 1 ? 's' : ''} selected`;
+        counterElement.style.display = 'block';
+    } else {
+        counterElement.style.display = 'none';
+    }
+}
+
+
+//To send the selected data to the selected record
+// document.querySelector('tbody').addEventListener('change', function (event) {
+//     if (event.target.type === 'checkbox') {
+//         const recordId = event.target.dataset.id;
+//         if (event.target.checked) {
+//             ZAGlobal.selectedRecords.push(recordId);
+//         } else {
+//             const index = ZAGlobal.selectedRecords.indexOf(recordId);
+//             if (index > -1) {
+//                 ZAGlobal.selectedRecords.splice(index, 1);
+//             }
+//         }
+
+//         ZAGlobal.reRenderTableBody();
+//         const rowCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+//         const headerCheckbox = document.querySelector('#selectAllCheckbox');
+//         updateHeaderCheckboxState(rowCheckboxes, headerCheckbox);
+//     }
+// });
 
 ZOHO.embeddedApp.init().then(function () {
     ZOHO.CRM.CONFIG.getCurrentUser().then(function (data) {
@@ -712,6 +682,13 @@ ZOHO.embeddedApp.init().then(function () {
             loadEnglishTranslations();
         }
 
+        // ZOHO.CRM.CONFIG.getOrgInfo().then(function(orgInfo){
+        //         ZAGlobal.domainName = orgInfo.org[0].domain_name || 'in';  // default to 'in' if not found
+        //         ZAGlobal.orgId = orgInfo.org[0].id;
+        //         // console.log("ORG INFO", orgInfo);
+        //         console.log("ORG INFO value", orgInfo.org[0].domain_name);
+        //         console.log("ORG INFO domain", orgInfo.org[0].country_code);
+        //     });    
     }).catch(function (error) {
         console.error('Error fetching current user:', error);
     });
@@ -741,158 +718,63 @@ function loadChineseTranslations() {
     document.getElementById('popup_header').innerText = "过滤器列表";
 }
 
-// console.log(res.data[0].criteria.group[0].field.api_name);
 
-ZAGlobal.fetchAllCriteria = async function () {
-    const ownerCache = {};
 
-    const fetchPromises = ZAGlobal.filteredRecords.map(async (record) => {
-        const config = { id: record.id };
-
-        try {
-            const res = await ZOHO.CRM.API.getApprovalById(config);
-            const criteria = res.data[0].criteria;
-            let criteriaStatement = 'N/A';
-
-            // === GROUPED CRITERIA ===
-            if (criteria?.group && Array.isArray(criteria.group)) {
-                const groupOperator = criteria.group_operator || 'AND';
-
-                const groupStatements = await Promise.all(
-                    criteria.group.map(async (item) => await ZAGlobal.parseCriteriaItem(item, ownerCache))
-                );
-
-                // === Show only the first rule (cleaned summary)
-                const firstVisible = (() => {
-                    const raw = groupStatements[0];
-                    const summaryMatch = raw.match(/<!--SUMMARY:(.*?)-->/);
-                    if (summaryMatch) return summaryMatch[1];
-                    return raw.replace(/<[^>]*>/g, '');
-                })();
-
-                // === Full popover content
-                const popoverFull = groupStatements
-                    .map(statement => `<li>${statement}</li>`)
-                    .join(`<li style="list-style: none; text-align: center; font-weight: bold;">${groupOperator}</li>`);
-
-                // === Show full popover only if grouped
-                const popoverHTML = `
-                    <div class="criteria-inline">
-                        <div class="criteria-first-line">${firstVisible}</div>
-                          <div class="popover-wrapper">
-                        <span class="criteria-popover-trigger">Show more</span>
-                        <div class="criteria-popover">
-                            <ul class="criteria-list">${popoverFull}</ul>
-                        </div>
-                        </div>
-                    </div>
-                `;
-
-                criteriaStatement = popoverHTML;
-            }
-
-            // === SINGLE CRITERIA ===
-            else if (criteria?.field && criteria?.value !== undefined) {
-                const singleStatement = await ZAGlobal.parseCriteriaItem(criteria, ownerCache);
-
-                // Clean summary for display
-                const firstVisible = (() => {
-                    const summaryMatch = singleStatement.match(/<!--SUMMARY:(.*?)-->/);
-                    if (summaryMatch) return summaryMatch[1];
-                    return singleStatement.replace(/<[^>]*>/g, '');
-                })();
-
-                // === No popover — simple div
-                const plainHTML = `
-                    <div class="criteria-inline">
-                        <div class="criteria-first-line">${firstVisible}</div>
-                    </div>
-                `;
-
-                criteriaStatement = plainHTML;
-            }
-
-            record.criteria_statements = criteriaStatement;
-
-        } catch (err) {
-            console.error('Error fetching criteria for record ID:', record.id, err);
-            record.criteria_statements = 'N/A';
+async function filterRecords() {
+    let filtered_flag = false;
+    let Module = document.getElementById('modules-list');
+    let searchKey = document.getElementById('record-name-filter-input');
+    let recordName_filter_type = document.getElementById('record-name-filter');
+    document.getElementById('cta-filter').addEventListener('click', async (e) => {
+        e.preventDefault();
+        let res = await ZOHO.CRM.API.getApprovalRecords({ type: "awaiting" });
+        let data = res.data;
+        if (searchKey.value == '') {
+            ZAGlobal.triggerToast('Enter a key to search', 1000, 'info');
+            searchKey.focus();
+            return;
         }
-    });
 
-    await Promise.all(fetchPromises);
-};
-
-ZAGlobal.parseCriteriaItem = async function (item, ownerCache) {
-    const fieldApi = item.field?.api_name || item.api_name;
-    const label = item.field?.label || item.field_label || fieldApi;
-    const value = item.value || item.value;
-    const comparator = item.comparator || 'equals';
-
-    const userFields = ['Owner', 'Created_By', 'Modified_By', 'Last_Activity_By'];
-    const isUserField = userFields.includes(fieldApi);
-
-    // === Resolve user fields to name(s)
-    if (isUserField) {
-        if (Array.isArray(value)) {
-            const names = await Promise.all(value.map(id => ZAGlobal.getUserName(id, ownerCache)));
-            const summary = names.join(', ');
-            return `${label} is<ul>${names.map(v => `<li>${v}</li>`).join('')}</ul><!--SUMMARY:${label} is ${summary}-->`;
+        switch (recordName_filter_type.value) {
+            case 'equals':
+                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase().includes(searchKey.value))));
+                break;
+            case 'not_equals':
+                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (!rec.entity.name.toLowerCase().includes(searchKey.value))))
+                break;
+            case 'starts_with':
+                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase().startsWith(searchKey.value))))
+                break;
+            case 'is':
+                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase() === searchKey.value.toLowerCase())))
+                break;
+            default:
+                console.log('default case');
+                break;
+        }
+        filtered_flag = true;
+        ZAGlobal.reRenderTableBody();
+    })
+    document.getElementById('cta-clear-filter').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (filtered_flag) {
+            filtered_flag = false;
+            searchKey.value = '';
+            ZAGlobal.filteredRecords = ZAGlobal.allRecords;
+            ZAGlobal.reRenderTableBody();
         } else {
-            const name = await ZAGlobal.getUserName(value, ownerCache);
-            return `${label} is '${name}'<!--SUMMARY:${label} is ${name}-->`;
+            ZAGlobal.triggerToast('Nothing to Clear! No Filter Applied', 1000, 'info');
         }
-    }
-
-    if (Array.isArray(value)) {
-        const summary = value.join(', ');
-        return `${label} is<ul>${value.map(v => `<li>${v}</li>`).join('')}</ul><!--SUMMARY:${label} is ${summary}-->`;
-    } else {
-        return `${label} is '${value}'<!--SUMMARY:${label} is ${value}-->`;
-    }
-};
+    })
+}
 
 
-// === Helper to fetch full name from user ID ===
-ZAGlobal.getUserName = async function (id, ownerCache) {
-    if (ownerCache[id]) return ownerCache[id];
+document.getElementById('filter-icon').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelector('#moduleContainer').classList.toggle('disabled');
+    document.querySelector('.filter-div').classList.toggle('hidden');
+})
 
-    try {
-        const res = await ZOHO.CRM.API.getUser({ ID: id });
-        // console.log(res);
-
-        const name = res.users?.[0]?.full_name || id;
-        ownerCache[id] = name;
-        return name;
-    } catch (e) {
-        console.warn('Could not resolve user ID:', id);
-        return id;
-    }
-};
-
-// To show the popover up or down 
-document.addEventListener('mouseover', function (e) {
-    if (e.target.classList.contains('criteria-popover-trigger')) {
-        const trigger = e.target;
-        const wrapper = trigger.parentElement;
-        const popover = wrapper.querySelector('.criteria-popover');
-
-        if (!popover) return;
-
-        popover.classList.remove('open-up');
-
-        // Small delay to wait for layout to paint
-        setTimeout(() => {
-            const rect = popover.getBoundingClientRect();
-            const spaceBelow = window.innerHeight - rect.bottom;
-            const spaceAbove = rect.top;
-
-            if (spaceBelow < 100 && spaceAbove > 100) {
-                popover.classList.add('open-up');
-            }
-        }, 10);
-    }
-});
 
 
 // Sorting Related Works - Starts
@@ -900,9 +782,9 @@ document.addEventListener('mouseover', function (e) {
 let tblHeader = document.querySelector("thead");
 let tblBody = document.querySelector("._tbody");
 let allHeadersList = Array.from(tblHeader.querySelectorAll("tr")[0].children);
+let selectedItems = []; 
 
 tblHeader.addEventListener("click", (e) => {
-    // e.preventDefault();
     if (e.target === allHeadersList[0] || e.target === document.querySelector('#selectAllCheckbox')) {
         e.stopImmediatePropagation();
         return;
@@ -918,20 +800,88 @@ tblHeader.addEventListener("click", (e) => {
         });
 
         currentDropDown.addEventListener("click", (event) => {
-            console.log(currentDropDown);
+            let clickedBtn = event.target.closest("li");
+            if (!clickedBtn) 
+            return;
 
+            let selectedValue = clickedBtn.innerText.trim();
+            selectedItems.push(selectedValue);
+            document.querySelectorAll('.dropdown-menu li').forEach(item => {
+                if (selectedItems.includes(item.innerText.trim())) {
+                    item.classList.add('disabled'); // Add disabled class to prevent selection
+                } else {
+                    item.classList.remove('disabled'); // Remove disabled class if not selected
+                }
+            });
+
+            document.querySelectorAll(".dropdown-menu li").forEach(item => item.classList.remove("selected"));
+            clickedBtn.classList.add("selected");
+
+            // currentDropDown.querySelectorAll("li").forEach(item => {
+            //     item.classList.remove("selected");
+            // });
+            // clickedBtn.classList.add("selected");
+
+            
             let allRows = Array.from(tblBody.rows);
+            let descArr = [];
             let indexOfColumn = allHeadersList.indexOf(currentDropDown.closest("th"));
+            let allValuesAreSame = true;
+
+            for (let i = 0; i < allRows.length; i++) {
+                let cellA = allRows[i].cells[indexOfColumn].innerText;
+                if (i > 0) {
+                    let cellB = allRows[i - 1].cells[indexOfColumn].innerText;
+                    if (cellA !== cellB) {
+                        allValuesAreSame = false;
+                        break;
+                    }
+                }
+            }
+
+            if (allValuesAreSame) {
+                return; 
+            }       
+            
             allRows.sort((rowA, rowB) => {
                 let cellA = rowA.cells[indexOfColumn].innerText;
                 let cellB = rowB.cells[indexOfColumn].innerText;
-                return cellA.localeCompare(cellB);
+                // return cellA.localeCompare(cellB);
+
+                if (cellA.includes("days ago") && cellB.includes('days ago')){
+                    let daysA = parseInt(cellA.split(' ')[0]);
+                    let daysB = parseInt(cellB.split(' ')[0]);
+                    return daysA - daysB;
+            }
+            if (cellA.includes(',') && cellB.includes(',')) {
+                let dateA = new Date(cellA);
+                let dateB = new Date(cellB);
+                return dateA - dateB;   
+            }
+            return cellA.localeCompare(cellB);
             });
             if (event.target.classList.contains("desc") || event.target.classList.contains("fa-arrow-down")) {
-                for (let i = allRows.length - 1; i >= 0; i--) {
-                    tblBody.appendChild(allRows[i]);
+                allRows.sort((rowA, rowB) => {
+                    let cellA = rowA.cells[indexOfColumn].innerText;
+                    let cellB = rowB.cells[indexOfColumn].innerText;
+                    // return cellA.localeCompare(cellB);
+    
+                    if (cellA.includes("days ago") && cellB.includes('days ago')){
+                        let daysA = parseInt(cellA.split(' ')[0]);
+                        let daysB = parseInt(cellB.split(' ')[0]);
+                        return daysB - daysA;
                 }
-            }
+                if (cellA.includes(',') && cellB.includes(',')) {
+                    let dateA = new Date(cellA);
+                    let dateB = new Date(cellB);
+                    return dateB - dateA;   
+                }
+                return cellB.localeCompare(cellA);
+                });
+                allRows.forEach(row =>{
+                    tblBody.appendChild(row);
+                });
+            }   
             else if (event.target.classList.contains("asc") || event.target.classList.contains("fa-arrow-up")) {
                 allRows.forEach(row => {
                     tblBody.appendChild(row)
@@ -943,6 +893,9 @@ tblHeader.addEventListener("click", (e) => {
                     tblBody.appendChild(row)
                 });
             }
+            setTimeout(() => {
+                currentDropDown.style.display = "none";  // Delay hiding to ensure it's after selection
+            }, 10);
         });
     }
 });
