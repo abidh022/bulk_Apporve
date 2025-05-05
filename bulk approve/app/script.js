@@ -61,9 +61,9 @@ var ZAGlobal = {
                                 <button class="delegate-btn" data-id="${record.entity.id}">Delegate</button>
                                 <button class="reject-btn" data-id="${record.entity.id}">Reject</button>
                             </td>
-                            <td>${record.is_approved ? 'Approved' : record.is_rejected ? 'Rejected' : record.is_delegated ? 'Delegated' : 'Waiting for approval'}</td>
-                        </tr>`;
-                // console.log(record);
+                            </tr>`;
+                            // console.log(record);
+                            // <td>${record.is_approved ? 'Approved' : record.is_rejected ? 'Rejected' : record.is_delegated ? 'Delegated' : 'Waiting for approval'}</td>
             });
 
 
@@ -73,6 +73,7 @@ var ZAGlobal = {
         resetHeaderCheckbox();
         updateSelectedCount();
         updateSelectAllCheckboxState();
+        document.getElementById('totalRecordsCount').innerHTML = "Total Records : <strong>" + ZAGlobal.allRecords.length + "</strong>";
         // Sorting related.
         let initialTBody = document.querySelector("._tbody");
         initialRows = Array.from(initialTBody.rows);
@@ -791,6 +792,7 @@ tblHeader.addEventListener("click", (e) => {
     }
     let dropdown = (e.target.closest("th")).querySelector(".dropdown-menu")
     if (dropdown) dropdown.style.display = "flex";
+
     let currentDropDown = e.target.closest("th").querySelector(".dropdown-menu");
     if (currentDropDown) {
         (document.querySelectorAll(".dropdown-menu")).forEach(element => {
@@ -827,7 +829,10 @@ tblHeader.addEventListener("click", (e) => {
             let descArr = [];
             let indexOfColumn = allHeadersList.indexOf(currentDropDown.closest("th"));
             let allValuesAreSame = true;
-
+            
+            // Highlight current column
+            allHeadersList.forEach(header => header.classList.remove("active-sorted-column"));
+            currentDropDown.closest("th").classList.add("active-sorted-column");
             for (let i = 0; i < allRows.length; i++) {
                 let cellA = allRows[i].cells[indexOfColumn].innerText;
                 if (i > 0) {

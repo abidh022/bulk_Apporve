@@ -6,18 +6,19 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
+  /* border-spacing: 0 ;  */
   margin-bottom: 70px;
   user-select: none;
-  color: #222222;
-  font-family: sans-serif
-  
+  color: #313131;
+  font-family: sans-serif;
+  font-size: 14px  
 }
 
 th,
 td {
-  /* border: 1px solid #ddd; */
   border-bottom: 1px solid #ddd;
   text-align: left;
+  /* padding: 9px 18px; */
   padding: 8px;
 }
 
@@ -30,10 +31,46 @@ tr:hover {
   background-color: #F7F9FB;
 }
 
+td:first-child,
+th:first-child {
+  padding-left: 8px;
+  padding-right: 10px;
+  width: 1px; 
+}
+
+td:nth-child(3),
+th:nth-child(3) {
+  padding-left: 10px;
+  padding-right: 5px;
+}
+
+td:nth-child(5),
+th:nth-child(5) {
+  padding-left: 40px;
+  padding-right: 20px;
+}
+
+th.active-sorted-column {
+  /* background-color: #f0f8ff; */
+  border-bottom: 1px solid #007bff;
+
+}
+
+
 /* Sorting Related Code starts here */
 .tbl-hdr-inner-container {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.tbl-heading {
+  flex-shrink: 0;
+}
+
+.menu-bar {
+  margin-left: 5px;
+  cursor: pointer;
 }
 
 .dropdown-menu {
@@ -199,7 +236,7 @@ input[type="checkbox"] {
 }
 
 #totalRecordsCount{
-  /* font-size: 15px; */
+  font-size: 14px;
   color: #434D5F;
   /* margin-top: 10px; */
   font-family: sans-serif;
@@ -207,7 +244,7 @@ input[type="checkbox"] {
   border: .6px solid #c4c1c1;
   padding: 5px;
   border-radius: 5px;
-  height: 17px;
+  height: 16px;
 }
 
 
@@ -311,6 +348,7 @@ input[type="checkbox"] {
 .pagination-footer button:disabled {
   /* background-color: #f0f0f0; */
   color: #aaa;
+  pointer-events: none;
   cursor: not-allowed;
 }
 
@@ -325,6 +363,12 @@ input[type="checkbox"] {
 .pagination-footer button#nextPageBtn::after {
   font-size: 18px;
   color: #007bff;
+}
+
+/* Style them when button is disabled */
+.pagination-footer button#prevPageBtn:disabled::before,
+.pagination-footer button#nextPageBtn:disabled::after {
+  color: #aaa; /* Gray color for disabled state */
 }
 
 /* Adding the <> symbols */
@@ -532,7 +576,7 @@ button.reject-btn,
 button.delegate-btn {
   border: none;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   color: #3b3b3b;
   background-color: transparent;
   transition: background-color 0.1s ease, color 0.1s ease;
@@ -725,14 +769,13 @@ button.delegate-btn:hover {
 }
 
 .dropdown-menu li:hover {
-  background: #f0f0f0;
-  background-color: #e6e0e0; 
+  background-color: #E7F2FF; 
   color: black;
 }
 
 .dropdown-menu li.selected {
-  background-color: #676869; 
-  color: white;  
+  background-color: #E7F2FF; 
+  color: black;  
   border-radius: 5px;
 }
 /* Sorting Related Style Ends here */
