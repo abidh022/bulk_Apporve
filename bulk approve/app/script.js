@@ -13,6 +13,11 @@ var ZAGlobal = {
         $('._tbody').empty();
         var tbody = '';
 
+        const headerCheckbox = document.querySelector('#selectAllCheckbox');
+        if (headerCheckbox) {
+            headerCheckbox.disabled = false;
+        }
+
         if (!ZAGlobal.domainName || !ZAGlobal.orgId) {
             try {
                 const orgInfo = await ZOHO.CRM.CONFIG.getOrgInfo();
@@ -23,10 +28,26 @@ var ZAGlobal = {
                 return;
             }
         }
-
+ 
         if (ZAGlobal.filteredRecords.length === 0) {
-            $('._tbody').html('<tr><td colspan="8">No records available to approve/reject.</td></tr>');
+            $('._tbody').html(`
+                <tr>
+                <td colspan="8" style="text-align: center; padding: 20px;">
+                    <img class="img" src="no_record_img.jpg" alt="No records">
+                    <div>No records available to approve/reject.</div>
+                </td>
+                </tr>
+                `);
+                if (headerCheckbox) {
+                headerCheckbox.disabled = true;
+                headerCheckbox.checked = false;
+                headerCheckbox.indeterminate = false;
+            }
         } else {
+            if (headerCheckbox) {
+                headerCheckbox.disabled = false;
+            }
+
             // Apply pagination
             var startIndex = (ZAGlobal.currentPage - 1) * ZAGlobal.recordsPerPage;
             var endIndex = startIndex + ZAGlobal.recordsPerPage;
@@ -56,10 +77,12 @@ var ZAGlobal = {
                             <td>${record.module}</td>
                             <td>${formattedDate}</td>
                             <td>${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago</td>
-                                <td>
-                                <button class="approve-btn" data-id="${record.entity.id}">Approve</button>
-                                <button class="delegate-btn" data-id="${record.entity.id}">Delegate</button>
-                                <button class="reject-btn" data-id="${record.entity.id}">Reject</button>
+                                <td class="action-buttons">
+                                <button class="approve-btn" data-id="${record.entity.id}"><span class="btn-label">Approve</span></button>
+                                  <span class="slash">/</span>
+                                <button class="delegate-btn" data-id="${record.entity.id}"><span class="btn-label">Delegate</span></button>
+                                  <span class="slash">/</span>
+                                <button class="reject-btn" data-id="${record.entity.id}"><span class="btn-label">Reject</span></button>
                             </td>
                             </tr>`;
                             // console.log(record);
@@ -73,7 +96,9 @@ var ZAGlobal = {
         resetHeaderCheckbox();
         updateSelectedCount();
         updateSelectAllCheckboxState();
-        document.getElementById('totalRecordsCount').innerHTML = "Total Records : <strong>" + ZAGlobal.allRecords.length + "</strong>";
+        var label = ZAGlobal.userLang === 'zh_CN' ? "总记录数" : "Total Records";
+        document.getElementById('totalRecordsCount').innerHTML = label + "：<strong>" + ZAGlobal.allRecords.length + "</strong>";
+        // document.getElementById('totalRecordsCount').innerHTML = "Total Records : <strong>" + ZAGlobal.allRecords.length + "</strong>";
         // Sorting related.
         let initialTBody = document.querySelector("._tbody");
         initialRows = Array.from(initialTBody.rows);
@@ -405,7 +430,7 @@ ZOHO.embeddedApp.on("PageLoad", function (data) {
 
             ZAGlobal.reRenderTableBody();
             // console.log(ZAGlobal.allRecords.length);
-            document.getElementById('totalRecordsCount').innerHTML = "Total Records : <strong>" + ZAGlobal.allRecords.length + "</strong>";
+            // document.getElementById('totalRecordsCount').innerHTML = "Total Records : <strong>" + ZAGlobal.allRecords.length + "</strong>";
         })
         .catch(function (error) {
             console.log('Error fetching records:', error);
@@ -432,7 +457,8 @@ function populateModules(modules) {
     select.appendChild(allModulesOption);
 
     modules.forEach(module => {
-        if (module.visible == true && module.visibility == 1 && module.creatable == true) {
+        if ( module.creatable == true && module.visibility == 1) {
+            // module.visible == true  &&
             const option = document.createElement('option');
             option.value = module.api_name;
             option.textContent = module.actual_plural_label;
@@ -537,6 +563,8 @@ function updateSelectAllCheckboxState() {
     const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]:not(:disabled)');
     const selectAllCheckbox = document.querySelector('#selectAllCheckbox');
 
+    if (!selectAllCheckbox) return;
+    
     const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
     const noneChecked = Array.from(checkboxes).every(checkbox => !checkbox.checked);
 
@@ -569,7 +597,7 @@ document.querySelector('tbody').addEventListener('change', function (event) {
             }
         }
 
-        ZAGlobal.reRenderTableBody();
+        // ZAGlobal.reRenderTableBody();
         updateSelectAllCheckboxState();
         updateSelectedCount(); 
     }
@@ -703,59 +731,157 @@ function loadEnglishTranslations() {
 
 function loadChineseTranslations() {
     console.log("Loading Chinese translations...");
-    document.getElementById('searchBar').placeholder = "搜索";
-    document.getElementById('searchbtn').innerText = "搜索";
-    document.getElementById('resetTableBtn').innerText = "重置";
+    document.getElementById('title').innerHTML = "批量记录批准";
     document.querySelector('.approve').innerText = "批准";
     document.querySelector('.reject').innerText = "拒绝";
-    document.querySelector('._comments').placeholder = "评论";
-    document.getElementById('recordNameHeader').innerText = "记录名称";
-    document.getElementById('approvalProcessNameHeader').innerText = "审批流程名称";
-    document.getElementById('recordIdHeader').innerText = "记录ID";
-    document.getElementById('statusHeader').innerText = "状态";
-    document.getElementById('doneBtn').innerText = "完毕";
-    document.getElementById('clearBtn').innerText = "取消";
-    document.querySelector('.moduleclass').innerHTML = "选择特定模块";
-    document.getElementById('popup_header').innerText = "过滤器列表";
+    document.getElementById('totalRecordsCount').innerHTML = "总记录数：<strong>" + ZAGlobal.allRecords.length + "</strong>";
+
+    //table header
+    document.querySelector('#recordNameHeader .tbl-heading').innerText = "记录名称";
+    document.querySelector('#approvalProcessNameHeader .tbl-heading').innerText = "审批流程名称";
+    document.querySelector('#moduleIdHeader .tbl-heading').innerText = "模块";
+    document.querySelector('#dateCreatedBy .tbl-heading').innerText = "创建时间";
+    document.querySelector('.no-of-days .tbl-heading').innerText = "创建时间";
+    document.querySelector('#action').innerText = "行动";
+
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+    const ascItem = menu.querySelector('.asc');
+    const descItem = menu.querySelector('.desc');
+    const unsortItem = menu.querySelector('.unsort');
+
+    if (ascItem) ascItem.innerHTML = '<i class="fa-solid fa-arrow-up"></i> 升序（A-Z）';
+    if (descItem) descItem.innerHTML = '<i class="fa-solid fa-arrow-down"></i> 降序（Z-A）';
+    if (unsortItem) unsortItem.innerHTML = '<i class="fa-solid fa-xmark"></i> 取消排序';
+});
+
+    document.querySelectorAll('.approve-btn .btn-label').forEach(el => el.innerText = "批准");
+    document.querySelectorAll('.delegate-btn .btn-label').forEach(el => el.innerText = "委派");
+    document.querySelectorAll('.reject-btn .btn-label').forEach(el => el.innerText = "拒绝");
 }
+    
+    // document.getElementById('searchbtn').innerText = "搜索";
+    // document.getElementById('resetTableBtn').innerText = "重置";
+    // document.querySelector('._comments').placeholder = "评论";
+    // document.getElementById('doneBtn').innerText = "完毕";
+    // document.getElementById('clearBtn').innerText = "取消";
+    // document.querySelector('.moduleclass').innerHTML = "选择特定模块";
+    // document.getElementById('popup_header').innerText = "过滤器列表";
 
 
+
+// async function filterRecords() {
+//     let filtered_flag = false;
+//     let Module = document.getElementById('modules-list');
+//     let searchKey = document.getElementById('record-name-filter-input');
+//     let recordName_filter_type = document.getElementById('record-name-filter');
+
+//     document.getElementById('cta-filter').addEventListener('click', async (e) => {
+//         e.preventDefault();
+//         let res = await ZOHO.CRM.API.getApprovalRecords({ type: "awaiting" });
+//         let data = res.data;
+
+//         if (searchKey.value.trim() === '') {
+//             ZAGlobal.triggerToast('Enter a key to search', 1000, 'info');
+//             searchKey.focus();
+//             return;
+//         }
+
+//         const searchValue = searchKey.value.trim().toLowercase();
+
+//         switch (recordName_filter_type.value) {
+//             case 'equals':
+//                 ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase().includes(searchValue))));
+//                 break;
+//             case 'not_equals':
+//                 ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (!rec.entity.name.toLowerCase().includes(searchValue))))
+//                 break;
+//             case 'starts_with':
+//                 ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase().startsWith(searchValue))))
+//                 break;
+//             case 'is':
+//                 ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase() === searchValue)))
+//                 break;
+//             default:
+//                 console.log('default case');
+//                 break;
+//         }
+//         filtered_flag = true;
+//         ZAGlobal.reRenderTableBody();
+//     })
+//     document.getElementById('cta-clear-filter').addEventListener('click', (e) => {
+//         e.preventDefault();
+//         if (filtered_flag) {
+//             filtered_flag = false;
+//             searchKey.value = '';
+//             ZAGlobal.filteredRecords = ZAGlobal.allRecords;
+//             ZAGlobal.reRenderTableBody();
+//         } else {
+//             ZAGlobal.triggerToast('Nothing to Clear! No Filter Applied', 1000, 'info');
+//         }
+//     })
+// }
+
+
+// document.getElementById('filter-icon').addEventListener('click', (e) => {
+//     e.preventDefault();
+//     document.querySelector('#moduleContainer').classList.toggle('disabled');
+//     document.querySelector('.filter-div').classList.toggle('hidden');
+// })
 
 async function filterRecords() {
     let filtered_flag = false;
     let Module = document.getElementById('modules-list');
     let searchKey = document.getElementById('record-name-filter-input');
     let recordName_filter_type = document.getElementById('record-name-filter');
+
     document.getElementById('cta-filter').addEventListener('click', async (e) => {
         e.preventDefault();
+
         let res = await ZOHO.CRM.API.getApprovalRecords({ type: "awaiting" });
         let data = res.data;
-        if (searchKey.value == '') {
+
+        if (searchKey.value.trim() === '') {
             ZAGlobal.triggerToast('Enter a key to search', 1000, 'info');
             searchKey.focus();
             return;
         }
 
+        const searchValue = searchKey.value.trim().toLowerCase();
+
         switch (recordName_filter_type.value) {
             case 'equals':
-                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase().includes(searchKey.value))));
+                ZAGlobal.filteredRecords = data.filter(rec =>
+                    rec.module === Module.value &&
+                    rec.entity.name.toLowerCase().includes(searchValue)
+                );
                 break;
             case 'not_equals':
-                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (!rec.entity.name.toLowerCase().includes(searchKey.value))))
+                ZAGlobal.filteredRecords = data.filter(rec =>
+                    rec.module === Module.value &&
+                    !rec.entity.name.toLowerCase().includes(searchValue)
+                );
                 break;
             case 'starts_with':
-                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase().startsWith(searchKey.value))))
+                ZAGlobal.filteredRecords = data.filter(rec =>
+                    rec.module === Module.value &&
+                    rec.entity.name.toLowerCase().startsWith(searchValue)
+                );
                 break;
             case 'is':
-                ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase() === searchKey.value.toLowerCase())))
+                ZAGlobal.filteredRecords = data.filter(rec =>
+                    rec.module === Module.value &&
+                    rec.entity.name.toLowerCase() === searchValue
+                );
                 break;
             default:
-                console.log('default case');
+                console.log('Unknown filter type');
                 break;
         }
+
         filtered_flag = true;
         ZAGlobal.reRenderTableBody();
-    })
+    });
+
     document.getElementById('cta-clear-filter').addEventListener('click', (e) => {
         e.preventDefault();
         if (filtered_flag) {
@@ -766,15 +892,14 @@ async function filterRecords() {
         } else {
             ZAGlobal.triggerToast('Nothing to Clear! No Filter Applied', 1000, 'info');
         }
-    })
+    });
 }
-
 
 document.getElementById('filter-icon').addEventListener('click', (e) => {
     e.preventDefault();
     document.querySelector('#moduleContainer').classList.toggle('disabled');
     document.querySelector('.filter-div').classList.toggle('hidden');
-})
+});
 
 
 
@@ -791,7 +916,8 @@ tblHeader.addEventListener("click", (e) => {
         return;
     }
     let dropdown = (e.target.closest("th")).querySelector(".dropdown-menu")
-    if (dropdown) dropdown.style.display = "flex";
+    dropdown.style.display = dropdown.style.display === "flex" ? "none" : "flex";
+
 
     let currentDropDown = e.target.closest("th").querySelector(".dropdown-menu");
     if (currentDropDown) {
@@ -844,9 +970,9 @@ tblHeader.addEventListener("click", (e) => {
                 }
             }
 
-            if (allValuesAreSame) {
-                return; 
-            }       
+            // if (allValuesAreSame) {
+            //     return; 
+            // }       
             
             allRows.sort((rowA, rowB) => {
                 let cellA = rowA.cells[indexOfColumn].innerText;
@@ -897,6 +1023,7 @@ tblHeader.addEventListener("click", (e) => {
                 initialRows.forEach(row => {
                     tblBody.appendChild(row)
                 });
+                allHeadersList.forEach(header => header.classList.remove("active-sorted-column"));
             }
             setTimeout(() => {
                 currentDropDown.style.display = "none";  // Delay hiding to ensure it's after selection

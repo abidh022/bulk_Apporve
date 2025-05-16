@@ -36,7 +36,7 @@
     <div id="selectedRecordsCount"></div>
   </div>
   <div id="_till_TotalRecordsCount">
-    <div id="totalRecordsCount"></div>
+    <div id="totalRecordsCount">Total Records </div>
   </div>
   </div>
 
@@ -44,62 +44,62 @@
     <thead>
       <tr>
         <th><input type="checkbox" id="selectAllCheckbox" /></th>
-        <th id="recordNameHeader">
+        <th id="recordNameHeader" data-column="recordName">
           <div class="tbl-hdr-inner-container">
             <span class="tbl-heading">Record Name</span>
             <span class="menu-bar"><i class="fa-solid fa-caret-down"></i>
               <ul class="dropdown-menu">
-                <li class="asc"><i class="fa-solid fa-arrow-up-a-z" ></i> Asc</li>
-                <li class="desc"> <i class="fa-solid fa-arrow-down-z-a"></i> Desc</li>
-                <li class="unsort"><i class="fa-solid fa-arrow-down-up-across-line"></i> Unsort</li>
+                <li class="asc"><i class="fa-solid fa-arrow-up"></i> Asc (A-Z)</li>
+                <li class="desc"> <i class="fa-solid fa-arrow-down"></i> Desc (Z-A)</li>
+                <li class="unsort"><i class="fa-solid fa-xmark"></i> Unsort</li>
               </ul>
             </span>
           </div>
         </th>
-        <th id="approvalProcessNameHeader">
+        <th id="approvalProcessNameHeader" data-column="approvalProcessName">
           <div class="tbl-hdr-inner-container">
             <span class="tbl-heading">Approval Process</span>
             <span class="menu-bar"><i class="fa-solid fa-caret-down"></i>
               <ul class="dropdown-menu">
                 <li class="asc"><i class="fa-solid fa-arrow-up"></i> Asc (A-Z)</li>
                 <li class="desc"> <i class="fa-solid fa-arrow-down"></i> Desc (Z-A)</li>
-                <li class="unsort"><i class="fa-solid fa-arrow-down-up-across-line"></i> Unsort</li>
+                <li class="unsort"><i class="fa-solid fa-xmark"></i> Unsort</li>
               </ul>
             </span>
           </div>
         </th>
-        <th id="moduleIdHeader">
+        <th id="moduleIdHeader" data-column="moduleId">
           <div class="tbl-hdr-inner-container">
             <span class="tbl-heading">Module</span>
             <span class="menu-bar"><i class="fa-solid fa-caret-down"></i>
               <ul class="dropdown-menu">
-                <li class="asc"><i class="fa-solid fa-arrow-up"></i> asc</li>
-                <li class="desc"> <i class="fa-solid fa-arrow-down"></i> desc</li>
-                <li class="unsort"><i class="fa-solid fa-arrow-down-up-across-line"></i> unsort</li>
+                <li class="asc"><i class="fa-solid fa-arrow-up"></i> Asc (A-Z)</li>
+                <li class="desc"> <i class="fa-solid fa-arrow-down"></i> Desc (Z-A)</li>
+                <li class="unsort"><i class="fa-solid fa-xmark"></i> Unsort</li>
               </ul>
             </span>
           </div>
         </th>
-        <th id="dateCreatedBy" class="created-date">
+        <th id="dateCreatedBy" class="created-date" data-column="dateCreated">
           <div class="tbl-hdr-inner-container">
             <span class="tbl-heading">Created Date</span>
             <span class="menu-bar"><i class="fa-solid fa-caret-down"></i>
               <ul class="dropdown-menu">
-                <li class="asc"><i class="fa-solid fa-arrow-up"></i> asc</li>
-                <li class="desc"> <i class="fa-solid fa-arrow-down"></i> desc</li>
-                <li class="unsort"><i class="fa-solid fa-arrow-down-up-across-line"></i> unsort</li>
+                <li class="asc"><i class="fa-solid fa-arrow-up"></i> Asc</li>
+                <li class="desc"> <i class="fa-solid fa-arrow-down"></i> Desc</li>
+                <li class="unsort"><i class="fa-solid fa-xmark"></i> Unsort</li>
               </ul>
             </span>
           </div>
         </th>
-        <th id="dateCreatedBy" class="no-of-days">
+        <th id="dateCreatedBy" class="no-of-days" data-column="noOfDays">
           <div class="tbl-hdr-inner-container">
             <span class="tbl-heading">No. of days</span>
             <span class="menu-bar"><i class="fa-solid fa-caret-down"></i>
               <ul class="dropdown-menu">
-                <li class="asc"><i class="fa-solid fa-arrow-up"></i> asc</li>
-                <li class="desc"> <i class="fa-solid fa-arrow-down"></i> desc</li>
-                <li class="unsort"><i class="fa-solid fa-arrow-down-up-across-line"></i> unsort</li>
+                <li class="asc"><i class="fa-solid fa-arrow-up"></i> Asc </li>
+                <li class="desc"> <i class="fa-solid fa-arrow-down"></i> Desc</li>
+                <li class="unsort"><i class="fa-solid fa-xmark"></i> Unsort</li>
               </ul>
             </span>
           </div>
@@ -129,7 +129,6 @@
         </th>
         <th>
         </th>
-        <th></th>
         <th></th>
         <th class="th filter">
           <!-- <select name="action-filter" id="action-filter">
