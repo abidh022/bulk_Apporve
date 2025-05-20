@@ -43,6 +43,9 @@ var ZAGlobal = {
                 headerCheckbox.checked = false;
                 headerCheckbox.indeterminate = false;
             }
+            // ZAGlobal.updatePagination();
+            // updateSelectedCount();
+            return;
         } else {
             if (headerCheckbox) {
                 headerCheckbox.disabled = false;
@@ -491,11 +494,11 @@ function handleModuleSelection() {
 
     if (selectedModule === 'AllModules') {
         ZAGlobal.filteredRecords = ZAGlobal.allRecords;
-        ZAGlobal.reRenderTableBody();
-    } else if (selectedModule) {
+    } else {
         ZAGlobal.filteredRecords = ZAGlobal.allRecords.filter(record => record.module === selectedModule);
-        ZAGlobal.reRenderTableBody();
     }
+
+    ZAGlobal.reRenderTableBody();
 }
 
 // Function to filter records based on the selected module
