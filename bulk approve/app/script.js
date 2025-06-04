@@ -708,7 +708,7 @@ ZOHO.embeddedApp.init().then(function () {
     ZOHO.CRM.CONFIG.getCurrentUser().then(function (data) {
         var userLanguage = data.users[0].locale;
 
-        if (userLanguage === 'zh_CN') {
+        if (userLanguage === 'zh_CN' || userLanguage === 'zh_TW') {
             loadChineseTranslations();
         } else {
             loadEnglishTranslations();
