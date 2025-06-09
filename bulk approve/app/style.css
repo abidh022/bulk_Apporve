@@ -155,6 +155,7 @@ th.active-sorted-column {
   margin-left: -8PX;
   border-top: 1px solid gray;
   margin-bottom: 2px;
+  padding-top: 5px;
   
 
 }
@@ -260,7 +261,7 @@ input[type="checkbox"] {
   border: .6px solid #c4c1c1;
   padding: 5px;
   border-radius: 5px;
-  height: 16px;
+  height: 18px;
 }
 
 

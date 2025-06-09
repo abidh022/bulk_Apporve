@@ -714,13 +714,6 @@ ZOHO.embeddedApp.init().then(function () {
             loadEnglishTranslations();
         }
 
-        // ZOHO.CRM.CONFIG.getOrgInfo().then(function(orgInfo){
-        //         ZAGlobal.domainName = orgInfo.org[0].domain_name || 'in';  // default to 'in' if not found
-        //         ZAGlobal.orgId = orgInfo.org[0].id;
-        //         // console.log("ORG INFO", orgInfo);
-        //         console.log("ORG INFO value", orgInfo.org[0].domain_name);
-        //         console.log("ORG INFO domain", orgInfo.org[0].country_code);
-        //     });    
     }).catch(function (error) {
         console.error('Error fetching current user:', error);
     });
@@ -738,6 +731,17 @@ function loadChineseTranslations() {
     document.querySelector('.approve').innerText = "批准";
     document.querySelector('.reject').innerText = "拒绝";
     document.getElementById('totalRecordsCount').innerHTML = "总记录数：<strong>" + ZAGlobal.allRecords.length + "</strong>";
+    document.getElementById('cancelPopupBtn').textContent = "取消";     
+    document.querySelector('label[for="comment"]').textContent = "评论";
+    document.getElementById('comment').placeholder = "在此添加您的评论（可选）";
+    document.querySelector('label[for="userSelect"]').textContent = "用户";
+    document.querySelector('label[for="rejectionReason"]').textContent = "拒绝原因";
+    document.getElementById('popupTitle').innerHTML = "批量记录批准";
+    
+
+    
+
+
 
     //table header
     document.querySelector('#recordNameHeader .tbl-heading').innerText = "记录名称";
