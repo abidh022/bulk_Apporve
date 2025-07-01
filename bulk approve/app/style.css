@@ -18,7 +18,7 @@ th,
 td {
   border-bottom: 1px solid #ddd;
   text-align: left;
-  padding: 7px;
+  padding: 9px;
   white-space: nowrap;
   overflow: hidden; 
   text-overflow: ellipsis;
@@ -203,6 +203,7 @@ th.active-sorted-column {
 
 input[type="checkbox"] {
   cursor: pointer;
+  background-color: yellow;
 }
 
 ._status {
@@ -373,6 +374,7 @@ input[type="checkbox"] {
 /* Page number indicator (Page X of Y) */
 .pagination-footer span {
   font-size: 12px;
+  margin-right: 5px;
   /* margin: 0px; */
 }
 
@@ -581,6 +583,7 @@ input[type="checkbox"] {
   border-radius: 4px;
   box-sizing: border-box;
   background-color: white;
+  
 }
 
 #delegateSection select:focus {
@@ -719,28 +722,33 @@ button.delegate-btn:hover {
 .filter-div th {
   border-collapse: collapse;
   border: none;
-  background: #f5f7fc !important;
+  background: #ffffff !important;
   vertical-align: top;
   padding: 10px 0px;
+  border-bottom: 1px solid gray;
 }
 
 .filter-div th input {
   height: 20px;
-  width: 250px;
+  width: auto;
   padding: 5px 10px;
-  font-size: 14px;
+  /* font-size: 14px; */
   color: #333;
   outline: 0;
   border: 1px solid #333;
   border-radius: 5px;
-  background-color: #f5f7fc;
+  /* background-color: #ffffff; */
+}
+
+#userSelect{
+  width: 20px;
 }
 
 .filter-div th select {
   padding: 6px;
-  background-color: #f5f7fc;
+  /* background-color: #f5f7fc; */
   color: #333;
-  font-size: 14px;
+  /* font-size: 14px; */
   font-weight: normal;
   border-radius: 5px;
   width: max-content;
@@ -759,8 +767,8 @@ button.delegate-btn:hover {
 }
 
 
-#cta-filter,
-#cta-clear-filter {
+#cta_filter,
+#cta_clear_filter {
   width: max-content;
   padding: 5px 16px;
   cursor: pointer;
@@ -773,8 +781,8 @@ button.delegate-btn:hover {
   margin-bottom: 10px;
 }
 
-#cta-filter:hover,
-#cta-clear-filter:hover {
+#cta_filter:hover,
+#cta_clear_filter:hover {
   border-color: #0056b3;
   background-color: #0056b3;
 }

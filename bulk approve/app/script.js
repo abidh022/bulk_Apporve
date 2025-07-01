@@ -14,9 +14,7 @@ var ZAGlobal = {
         var tbody = '';
 
         const headerCheckbox = document.querySelector('#selectAllCheckbox');
-        if (headerCheckbox) {
-            headerCheckbox.disabled = false;
-        }
+        if (headerCheckbox) headerCheckbox.disabled = false;
 
         if (!ZAGlobal.domainName || !ZAGlobal.orgId) {
             try {
@@ -24,29 +22,46 @@ var ZAGlobal = {
                 ZAGlobal.domainName = orgInfo.org[0].country_code || 'in';
                 ZAGlobal.orgId = orgInfo.org[0].domain_name;
             } catch (error) {
-                ZAGlobal.triggerToast('Unable to fetch organization info.', 3000, 'error');
+                ZAGlobal.triggerToast(t.toast_fetch_org_error, 3000, 'error');
                 return;
             }
         }
- 
-        if (ZAGlobal.filteredRecords.length === 0) {
+
+        const noRecords = !Array.isArray(ZAGlobal.allRecords) || ZAGlobal.allRecords.length === 0;
+        const noFilteredRecords = !Array.isArray(ZAGlobal.filteredRecords) || ZAGlobal.filteredRecords.length === 0;
+
+        if (noRecords || noFilteredRecords) {
+            const noRecordsMessage = noRecords
+                ? (t.noRecordsAvailable || "No records found")
+                : (t.noFilteredRecords || "No records match your filter");
             $('._tbody').html(`
                 <tr>
                 <td colspan="8" style="text-align: center; padding: 20px;">
                     <img class="img" src="no_record_img.jpg" alt="No records">
-                    <div>No records available to approve/reject.</div>
+                    <div>${noRecordsMessage}</div>
                 </td>
                 </tr>
                 `);
-                if (headerCheckbox) {
+            if (headerCheckbox) {
                 headerCheckbox.disabled = true;
                 headerCheckbox.checked = false;
                 headerCheckbox.indeterminate = false;
             }
+            ZAGlobal.updatePagination();
+            resetHeaderCheckbox();
+            updateSelectedCount();
+            updateSelectAllCheckboxState();
+
+            const totalCountEl = document.getElementById('totalRecordsCount');
+            if (totalCountEl) {
+                const label = t.totalRecords || 'Total Records';
+                totalCountEl.innerHTML = `${label}: ${'0'}`;
+            }
             // ZAGlobal.updatePagination();
             // updateSelectedCount();
             return;
-        } else {
+        }
+        else {
             if (headerCheckbox) {
                 headerCheckbox.disabled = false;
             }
@@ -79,8 +94,8 @@ var ZAGlobal = {
                             <td>${record.rule.name}</td>
                             <td>${record.module}</td>
                             <td>${formattedDate}</td>
-                            <td>${daysAgo} day${daysAgo !== 1 ? 's' : ''} ago</td>
-                                <td class="action-buttons">
+                            <td>${daysAgo} ${daysAgo === 1 ? t.dayAgo : t.daysAgo}</td>
+                            <td class="action-buttons">
                                 <button class="approve-btn" data-id="${record.entity.id}"><span class="btn-label">Approve</span></button>
                                   <span class="slash">/</span>
                                 <button class="delegate-btn" data-id="${record.entity.id}"><span class="btn-label">Delegate</span></button>
@@ -88,21 +103,27 @@ var ZAGlobal = {
                                 <button class="reject-btn" data-id="${record.entity.id}"><span class="btn-label">Reject</span></button>
                             </td>
                             </tr>`;
-                            // console.log(record);
-                            // <td>${record.is_approved ? 'Approved' : record.is_rejected ? 'Rejected' : record.is_delegated ? 'Delegated' : 'Waiting for approval'}</td>
+                // console.log(record);
             });
-
-
             $('._tbody').append(tbody);
         }
         ZAGlobal.updatePagination();
         resetHeaderCheckbox();
         updateSelectedCount();
         updateSelectAllCheckboxState();
-        var label = ZAGlobal.userLang === 'zh_CN' ? "总记录数" : "Total Records";
-        document.getElementById('totalRecordsCount').innerHTML = label + "：<strong>" + ZAGlobal.allRecords.length + "</strong>";
-        // document.getElementById('totalRecordsCount').innerHTML = "Total Records : <strong>" + ZAGlobal.allRecords.length + "</strong>";
-        // Sorting related.
+
+        // ✅ Updated logic to always show total or Nil
+        const totalCountEl = document.getElementById('totalRecordsCount');
+        if (totalCountEl) {
+            const total = Array.isArray(ZAGlobal.filteredRecords) ? ZAGlobal.filteredRecords.length : 0;
+            const label = t.totalRecords || 'Total Records';
+            totalCountEl.innerHTML = `${label}: ${total === 0 ? ('0') : `<strong>${total}</strong>`}`;
+        }
+
+        document.querySelectorAll('.approve-btn .btn-label').forEach(el => el.innerText = t.approve);
+        document.querySelectorAll('.delegate-btn .btn-label').forEach(el => el.innerText = t.delegate);
+        document.querySelectorAll('.reject-btn .btn-label').forEach(el => el.innerText = t.reject);
+
         let initialTBody = document.querySelector("._tbody");
         initialRows = Array.from(initialTBody.rows);
     },
@@ -111,7 +132,8 @@ var ZAGlobal = {
         var totalRecords = ZAGlobal.filteredRecords.length;
         ZAGlobal.totalPages = Math.ceil(totalRecords / ZAGlobal.recordsPerPage);
 
-        var paginationHtml = `No of records
+        var paginationHtml = `
+            <span id="recordsLabel">${t.paginationFooter}</span>
             <select id="recordsPerPage">
                 <option value="10" ${ZAGlobal.recordsPerPage === 10 ? 'selected' : ''}>10 </option>
                 <option value="20" ${ZAGlobal.recordsPerPage === 20 ? 'selected' : ''}>20 </option>
@@ -126,6 +148,10 @@ var ZAGlobal = {
         `;
         $('#paginationFooter').html(paginationHtml);
         ZAGlobal.bindPaginationEvents();
+
+        // if (ZAGlobal.userLang && translations[ZAGlobal.userLang]) {
+        //     document.getElementById('recordsLabel').innerText = translations[ZAGlobal.userLang].paginationFooter;
+        // }
     },
 
     bindPaginationEvents: function () {
@@ -156,7 +182,7 @@ async function populateUserList() {
         const res = await ZOHO.CRM.API.getAllUsers({ Type: "AllUsers" });
 
         if (res.users && res.users.length === 0) {
-            ZAGlobal.triggerToast('No users found to assign.', 3000, 'warning');
+            ZAGlobal.triggerToast(t.toast_no_users, 3000, 'warning');
             return;
         }
         $('#delegateSection').show();
@@ -170,7 +196,7 @@ async function populateUserList() {
         const activeUsers = res.users.filter(user => user.status === 'active');
 
         if (activeUsers.length === 0) {
-            ZAGlobal.triggerToast('No active users found to assign.', 3000, 'warning');
+            ZAGlobal.triggerToast(t.toast_no_active_users, 3000, 'warning');
         }
 
         activeUsers.forEach((user) => {
@@ -181,10 +207,10 @@ async function populateUserList() {
         });
 
     } catch (error) {
-        ZAGlobal.triggerToast('Failed to fetch user list. Please try again later.', 3000, 'warning');
+        ZAGlobal.triggerToast(t.toast_fetch_user_failed, 3000, 'warning');
     }
 }
-
+let t = {};
 let boundSubmitHandler;
 ZAGlobal.buttonAction = async function (action, recordId = null) {
     // console.log(`Action: ${action} for Record id ${recordId}`);     
@@ -194,7 +220,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
         // Single record action
         const record = ZAGlobal.waitingRecords.find(rec => rec.entity.id == recordId);
         if (!record) {
-            ZAGlobal.triggerToast('Record not found.', 3000, 'warning');
+            ZAGlobal.triggerToast(t.toast_record_not_found, 3000, 'warning');
             return;
         }
         recordsToProcess.push(record);
@@ -202,28 +228,24 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
         // Bulk action
         const checkedRecords = ZAGlobal.selectedRecords.length;
         if (checkedRecords === 0) {
-            ZAGlobal.triggerToast('Please select at least one record to approve/reject.', 3000, 'warning');
+            ZAGlobal.triggerToast(t.toast_select_one_record, 3000, 'warning');
             return;
         }
         recordsToProcess = ZAGlobal.waitingRecords.filter(rec => ZAGlobal.selectedRecords.includes(rec.entity.id));
     }
-
     document.getElementById('approvalRejectPopup').style.display = 'none';
     document.getElementById('approvalRejectPopup').style.display = 'flex';
-    document.getElementById('popupTitle').textContent = action === 'approve' ? 'Approve Records' : action === 'reject' ? 'Reject Records' : 'Delegate Records';
+    // document.getElementById('popupTitle').textContent = action === 'approve' ? 'Approve Records' : action === 'reject' ? 'Reject Records' : 'Delegate Records';
     document.getElementById('commentSection').style.display = action === 'reject' ? 'none' : 'block';
     document.getElementById('comment').value = '';
     document.getElementById('rejectionReason').value = 'selectReasonOption';
     document.getElementById('rejectionReasonSection').style.display = action === 'reject' ? 'block' : 'none';
     document.getElementById('otherReasonContainer').style.display = 'none';
-    document.getElementById('submitActionBtn').textContent = action === 'approve' ? 'Approve' : action === 'reject' ? 'Reject' : 'Delegate';
-
-    //For Popup button style color change
+    document.getElementById('popupTitle').textContent = t[`${action}Title`];
+    document.getElementById('submitActionBtn').textContent = t[`${action}Btn`];
+    console.log("Button label:", t[`${action}Btn`]);
 
     const submitBtn = document.getElementById('submitActionBtn');
-
-    // Set text
-    submitBtn.textContent = action === 'approve' ? 'Approve' : action === 'reject' ? 'Reject' : 'Delegate';
 
     // Reset previous styles
     submitBtn.classList.remove('approve-style', 'reject-style', 'delegate-style');
@@ -236,14 +258,6 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
     } else if (action === 'delegate') {
         submitBtn.classList.add('delegate-style');
     }
-    // const submitBtn = document.getElementById('submitActionBtn');
-    // const actionMap = {
-    //     approve: { text: 'Approve', class: 'approve-style' },
-    //     reject: { text: 'Reject', class: 'reject-style' },
-    //     delegate: { text: 'Delegate', class: 'delegate-style' }
-    // };
-    // submitBtn.textContent = actionMap[action].text;
-    // submitBtn.className = actionMap[action].class;
 
     const submitButton = document.getElementById('submitActionBtn');
     submitButton.removeEventListener('click', handleSubmitAction);
@@ -254,7 +268,6 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
 
     boundSubmitHandler = () => handleSubmitAction(recordsToProcess, action);
     submitButton.addEventListener('click', boundSubmitHandler);
-    // submitButton.addEventListener('click', () => handleSubmitAction(recordsToProcess, action));
 
     if (action !== 'delegate') {
         document.getElementById('delegateSection').style.display = 'none';
@@ -276,7 +289,6 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
 
     // Handle the Cancel button to close the popup
     document.getElementById('cancelPopupBtn').addEventListener('click', () => {
-        // document.getElementById('approvalRejectPopup').style.display = 'none';
         recordsToProcess = [];
     });
 
@@ -290,13 +302,13 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
         if (action === 'reject') {
             rejectionReason = $('#rejectionReason').val();
             if (rejectionReason === 'selectReasonOption') {
-                ZAGlobal.triggerToast('Please select a rejection reason.', 3000, 'warning');
+                ZAGlobal.triggerToast(t.toast_select_rejection_reason, 3000, 'warning');
                 return;
             }
             if (rejectionReason === 'Other') {
                 otherReason = $('#otherReason').val().trim();
                 if (!otherReason) {
-                    ZAGlobal.triggerToast('Please specify the reason for rejection.', 3000, 'warning');
+                    ZAGlobal.triggerToast(t.toast_rejection_reason_required, 3000, 'warning');
                     return;
                 }
                 comment = otherReason;
@@ -306,7 +318,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
         if (action === 'delegate') {
             selectedUser = $('#userSelect').val();
             if (!selectedUser) {
-                ZAGlobal.triggerToast('Please select a user to delegate the record.', 3000, 'warning');
+                ZAGlobal.triggerToast(t.toast_select_user_delegate, 3000, 'warning');
                 return;
             }
             comment = $('#comment').val().trim();
@@ -328,29 +340,29 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
             try {
                 const res = await ZOHO.CRM.API.approveRecord(config);
 
-            if (!res || res.code !== 'SUCCESS') {
-                console.error(`Failed for record ${record.entity.id}`, res);
-                continue; // Skip processing this record
-            }
+                if (!res || res.code !== 'SUCCESS') {
+                    console.error(`Failed for record ${record.entity.id}`, res);
+                    continue; // Skip processing this record
+                }
 
-            // Update count only on success
-            if (action === 'approve') approvedRecordsCount++;
-            else if (action === 'reject') rejectedRecordsCount++;
-            else if (action === 'delegate') delegatedRecordsCount++;
+                // Update count only on success
+                if (action === 'approve') approvedRecordsCount++;
+                else if (action === 'reject') rejectedRecordsCount++;
+                else if (action === 'delegate') delegatedRecordsCount++;
 
-            const updatedRecord = ZAGlobal.waitingRecords.find(r => r.entity.id === res.details.id);
-            if (updatedRecord) {
-                updatedRecord.is_approved = action === 'approve';
-                updatedRecord.is_rejected = action === 'reject';
-                updatedRecord.is_delegated = action === 'delegate';
+                const updatedRecord = ZAGlobal.waitingRecords.find(r => r.entity.id === res.details.id);
+                if (updatedRecord) {
+                    updatedRecord.is_approved = action === 'approve';
+                    updatedRecord.is_rejected = action === 'reject';
+                    updatedRecord.is_delegated = action === 'delegate';
 
-                // Remove from all relevant arrays
-                ZAGlobal.processedRecords.push(updatedRecord);
-                ZAGlobal.waitingRecords = ZAGlobal.waitingRecords.filter(r => r.entity.id !== res.details.id);
-                ZAGlobal.filteredRecords = ZAGlobal.filteredRecords.filter(r => r.entity.id !== res.details.id);
-                ZAGlobal.allRecords = ZAGlobal.allRecords.filter(r => r.entity.id !== res.details.id);
-                ZAGlobal.selectedRecords = ZAGlobal.selectedRecords.filter(id => id !== res.details.id);
-            }
+                    // Remove from all relevant arrays
+                    ZAGlobal.processedRecords.push(updatedRecord);
+                    ZAGlobal.waitingRecords = ZAGlobal.waitingRecords.filter(r => r.entity.id !== res.details.id);
+                    ZAGlobal.filteredRecords = ZAGlobal.filteredRecords.filter(r => r.entity.id !== res.details.id);
+                    ZAGlobal.allRecords = ZAGlobal.allRecords.filter(r => r.entity.id !== res.details.id);
+                    ZAGlobal.selectedRecords = ZAGlobal.selectedRecords.filter(id => id !== res.details.id);
+                }
 
             } catch (error) {
                 console.log("Error in API call:", error);
@@ -358,22 +370,25 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
             }
         }
 
-    let toastMessage = '';
-    if (action === 'approve') {
-        toastMessage = `${approvedRecordsCount} record${approvedRecordsCount === 1 ? '' : 's'} ${approvedRecordsCount === 1 ? 'was' : 'were'} approved`;
-    } else if (action === 'reject') {
-        toastMessage = `${rejectedRecordsCount} record${rejectedRecordsCount === 1 ? '' : 's'} ${rejectedRecordsCount === 1 ? 'was' : 'were'} rejected`;
-    } else if (action === 'delegate') {
-        toastMessage = `${delegatedRecordsCount} record${delegatedRecordsCount === 1 ? '' : 's'} ${delegatedRecordsCount === 1 ? 'was' : 'were'} delegated`;
-    }
-    
+        let toastMessage = '';
+        if (action === 'approve') {
+            toastMessage = `${approvedRecordsCount} record${approvedRecordsCount === 1 ? '' : 's'} ${approvedRecordsCount === 1 ? 'was' : 'were'} approved`;
+        } else if (action === 'reject') {
+            toastMessage = `${rejectedRecordsCount} record${rejectedRecordsCount === 1 ? '' : 's'} ${rejectedRecordsCount === 1 ? 'was' : 'were'} rejected`;
+        } else if (action === 'delegate') {
+            toastMessage = `${delegatedRecordsCount} record${delegatedRecordsCount === 1 ? '' : 's'} ${delegatedRecordsCount === 1 ? 'was' : 'were'} delegated`;
+        }
 
-    if (approvedRecordsCount || rejectedRecordsCount || delegatedRecordsCount) {
-        document.getElementById('approvalRejectPopup').style.display = 'none';
-        ZAGlobal.reRenderTableBody();
-        ZAGlobal.triggerToast(toastMessage, 3000, action === 'approve' ? 'success' : action === 'reject' ? 'error' : 'info');
-    }}
+
+        if (approvedRecordsCount || rejectedRecordsCount || delegatedRecordsCount) {
+            document.getElementById('approvalRejectPopup').style.display = 'none';
+            ZAGlobal.reRenderTableBody();
+            ZAGlobal.triggerToast(toastMessage, 3000, action === 'approve' ? 'success' : action === 'reject' ? 'error' : 'info');
+        }
+    }
+    await ZAGlobal.reRenderTableBody();
 }
+
 
 $(document).on('click', '.approve-btn', function () {
     const recordId = $(this).data('id');
@@ -398,6 +413,7 @@ document.getElementById('cancelPopupBtn').addEventListener('click', () => {
 let currentToast = null;
 
 ZAGlobal.triggerToast = function (message, duration = 1000, type = 'info') {
+    const fallback = typeof message === 'string' ? message : 'Notification';
 
     if (currentToast) {
         currentToast.toastElement.remove();
@@ -409,7 +425,7 @@ ZAGlobal.triggerToast = function (message, duration = 1000, type = 'info') {
             (type === 'error') ? '#F44336' : '#2196F3';
 
     currentToast = Toastify({
-        text: message,
+        text: fallback,
         duration: duration,
         gravity: "top",
         position: "center",
@@ -425,15 +441,15 @@ ZAGlobal.triggerToast = function (message, duration = 1000, type = 'info') {
 ZOHO.embeddedApp.on("PageLoad", function (data) {
     // if (data && data.Entity) {
     ZAGlobal.module = data.Entity;
+
     ZOHO.CRM.API.getApprovalRecords({ type: "awaiting" })
         .then(async function (toBeApproved) {
-            ZAGlobal.filteredRecords = toBeApproved.data;
-            ZAGlobal.allRecords = [...toBeApproved.data];
-            ZAGlobal.waitingRecords = [...toBeApproved.data];
+            const records = Array.isArray(toBeApproved?.data) ? toBeApproved.data : [];
 
-            ZAGlobal.reRenderTableBody();
-            // console.log(ZAGlobal.allRecords.length);
-            // document.getElementById('totalRecordsCount').innerHTML = "Total Records : <strong>" + ZAGlobal.allRecords.length + "</strong>";
+            ZAGlobal.filteredRecords = [...records];
+            ZAGlobal.allRecords = [...records];
+            ZAGlobal.waitingRecords = [...records];
+            await ZAGlobal.reRenderTableBody();
         })
         .catch(function (error) {
             console.log('Error fetching records:', error);
@@ -453,18 +469,22 @@ function populateModules(modules) {
     const select = document.getElementById('module');
     select.innerHTML = '';
 
+
     const allModulesOption = document.createElement('option');
-    allModulesOption.value = 'AllModules';
-    allModulesOption.textContent = "All Modules";
+    allModulesOption.value = 'All_Modules';
+    allModulesOption.textContent = t['All_Modules'] ; // Use translation or fallback
     allModulesOption.selected = true;
     select.appendChild(allModulesOption);
 
     modules.forEach(module => {
-        if ( module.creatable == true && module.visibility == 1) {
+        if (module.creatable == true && module.visibility == 1) {
             // module.visible == true  &&
             const option = document.createElement('option');
             option.value = module.api_name;
-            option.textContent = module.actual_plural_label;
+
+            const translatedLabel = t[module.actual_plural_label] || module.actual_plural_label;
+            option.textContent = translatedLabel;
+            // option.textContent = module.actual_plural_label;
             select.appendChild(option);
             const optionClone = option.cloneNode(true);   // Sakthi's Code
             document.getElementById('modules-list').appendChild(optionClone);
@@ -478,7 +498,7 @@ function populateModules(modules) {
         closeOnSelect: true,
         language: {
             noResults: function () {
-                return "No results found";
+                return t.noResults || "No results found";
             }
         }
     });
@@ -486,6 +506,7 @@ function populateModules(modules) {
     $('#module').on('change', function () {
         handleModuleSelection();
     });
+    ZAGlobal.filteredRecords = [...ZAGlobal.allRecords];
 }
 
 // Function to handle when the module is selected
@@ -500,23 +521,6 @@ function handleModuleSelection() {
 
     ZAGlobal.reRenderTableBody();
 }
-
-// Function to filter records based on the selected module
-// function filterRecordsByModule(selectedModule) {
-//     if (!selectedModule || selectedModule === 'AllModules') {
-//         ZAGlobal.filteredRecords = ZAGlobal.allRecords;
-//     } else {
-//         ZAGlobal.filteredRecords = ZAGlobal.allRecords.filter(record => record.module === selectedModule);
-//     }
-//     ZAGlobal.reRenderTableBody();
-// }
-
-// Initialize the module selection behavior 
-// function initializeModuleSelection(modules) {
-//     populateModules(modules);
-//     $('#module').on('change', handleModuleSelection);
-// }
-
 
 ZAGlobal.selectAll = function () {
     const headerCheckbox = document.querySelector('#selectAllCheckbox');
@@ -567,7 +571,7 @@ function updateSelectAllCheckboxState() {
     const selectAllCheckbox = document.querySelector('#selectAllCheckbox');
 
     if (!selectAllCheckbox) return;
-    
+
     const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
     const noneChecked = Array.from(checkboxes).every(checkbox => !checkbox.checked);
 
@@ -602,7 +606,7 @@ document.querySelector('tbody').addEventListener('change', function (event) {
 
         // ZAGlobal.reRenderTableBody();
         updateSelectAllCheckboxState();
-        updateSelectedCount(); 
+        updateSelectedCount();
     }
 });
 
@@ -668,192 +672,237 @@ function updateSelectedCount() {
     const count = ZAGlobal.selectedRecords.length;
 
     let counterElement = document.getElementById('selectedCounter');
-
     if (!counterElement) {
         counterElement = document.createElement('div');
         counterElement.id = 'selectedCounter';
-        document.querySelector('#selectedRecordsCount')?.prepend(counterElement); 
+        document.querySelector('#selectedRecordsCount')?.prepend(counterElement);
     }
 
     if (count > 0) {
-        counterElement.textContent = `${count} Record${count > 1 ? 's' : ''} selected`;
+        ``
+
+        let translatedText = t.selectedCounterText.replace('${count}', count).replace('${plural}', count > 1 ? 's' : '');
+        counterElement.textContent = translatedText;
         counterElement.style.display = 'block';
     } else {
         counterElement.style.display = 'none';
     }
 }
 
+function applyTranslations() {
+    if (!t) return;
 
-//To send the selected data to the selected record
-// document.querySelector('tbody').addEventListener('change', function (event) {
-//     if (event.target.type === 'checkbox') {
-//         const recordId = event.target.dataset.id;
-//         if (event.target.checked) {
-//             ZAGlobal.selectedRecords.push(recordId);
-//         } else {
-//             const index = ZAGlobal.selectedRecords.indexOf(recordId);
-//             if (index > -1) {
-//                 ZAGlobal.selectedRecords.splice(index, 1);
-//             }
-//         }
+    document.getElementById('title').innerText = t.title;
+    // document.getElementById('bulkReject').innerText = t.bulkReject;
+    // document.getElementById('bulkApprove').innerText = t.bulkApprove;
+    document.querySelector('.approve').innerText = t.approve;
+    document.querySelector('.reject').innerText = t.reject;
+    document.getElementById('cancelPopupBtn').innerText = t.cancel;
 
-//         ZAGlobal.reRenderTableBody();
-//         const rowCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
-//         const headerCheckbox = document.querySelector('#selectAllCheckbox');
-//         updateHeaderCheckboxState(rowCheckboxes, headerCheckbox);
-//     }
-// });
+    document.querySelector('label[for="comment"]').innerText = t.commentLabel;
+    document.querySelector('label[for="otherReason"]').innerText = t.specifyLabel;
+    document.getElementById('otherReason').placeholder = t.specifyPlaceholder;
 
-ZOHO.embeddedApp.init().then(function () {
-    ZOHO.CRM.CONFIG.getCurrentUser().then(function (data) {
-        var userLanguage = data.users[0].locale;
+    document.getElementById('comment').placeholder = t.commentPlaceholder;
+    document.getElementById('cta_filter').innerHTML = t.cta_filter;
+    document.getElementById('cta_clear_filter').innerHTML = t.cta_clear_filter;
 
-        if (userLanguage === 'zh_CN' || userLanguage === 'zh_TW') {
-            loadChineseTranslations();
-        } else {
-            loadEnglishTranslations();
-        }
+    document.querySelector('label[for="userSelect"]').innerText = t.userLabel;
+    document.querySelector('label[for="rejectionReason"]').innerText = t.rejectionReasonLabel;
+    document.getElementById('popupTitle').innerText = t.popupTitle;
 
-    }).catch(function (error) {
-        console.error('Error fetching current user:', error);
-    });
-}).catch(function (error) {
-    console.error('Error initializing SDK:', error);
-});
+    const filterInput = document.getElementById('record-name-filter-input');
+    if (filterInput && t["record-name-filter-input"]) {
+        filterInput.placeholder = t["record-name-filter-input"];
+        // console.log(`Filter input placeholder set to: ${t["record-name-filter-input"]}`);
 
-function loadEnglishTranslations() {
-    // console.log("Defualt eng lan");
-}
+    }
 
-function loadChineseTranslations() {
-    console.log("Loading Chinese translations...");
-    document.getElementById('title').innerHTML = "批量记录批准";
-    document.querySelector('.approve').innerText = "批准";
-    document.querySelector('.reject').innerText = "拒绝";
-    document.getElementById('totalRecordsCount').innerHTML = "总记录数：<strong>" + ZAGlobal.allRecords.length + "</strong>";
-    document.getElementById('cancelPopupBtn').textContent = "取消";     
-    document.querySelector('label[for="comment"]').textContent = "评论";
-    document.getElementById('comment').placeholder = "在此添加您的评论（可选）";
-    document.querySelector('label[for="userSelect"]').textContent = "用户";
-    document.querySelector('label[for="rejectionReason"]').textContent = "拒绝原因";
-    document.getElementById('popupTitle').innerHTML = "批量记录批准";
-    
-
-    
-
-
-
-    //table header
-    document.querySelector('#recordNameHeader .tbl-heading').innerText = "记录名称";
-    document.querySelector('#approvalProcessNameHeader .tbl-heading').innerText = "审批流程名称";
-    document.querySelector('#moduleIdHeader .tbl-heading').innerText = "模块";
-    document.querySelector('#dateCreatedBy .tbl-heading').innerText = "创建时间";
-    document.querySelector('.no-of-days .tbl-heading').innerText = "创建时间";
-    document.querySelector('#action').innerText = "行动";
+    // Table headers
+    document.querySelector('#recordNameHeader .tbl-heading').innerText = t.recordName;
+    document.querySelector('#approvalProcessNameHeader .tbl-heading').innerText = t.approvalProcess;
+    document.querySelector('#moduleIdHeader .tbl-heading').innerText = t.module;
+    document.querySelector('#dateCreatedBy .tbl-heading').innerText = t.createdDate;
+    document.querySelector('.no-of-days .tbl-heading').innerText = t.noOfDays;
+    document.querySelector('#action').innerText = t.action;
 
     document.querySelectorAll('.dropdown-menu').forEach(menu => {
-    const ascItem = menu.querySelector('.asc');
-    const descItem = menu.querySelector('.desc');
-    const unsortItem = menu.querySelector('.unsort');
+        const ascItem = menu.querySelector('.asc');
+        const descItem = menu.querySelector('.desc');
+        const unsortItem = menu.querySelector('.unsort');
 
-    if (ascItem) ascItem.innerHTML = '<i class="fa-solid fa-arrow-up"></i> 升序（A-Z）';
-    if (descItem) descItem.innerHTML = '<i class="fa-solid fa-arrow-down"></i> 降序（Z-A）';
-    if (unsortItem) unsortItem.innerHTML = '<i class="fa-solid fa-xmark"></i> 取消排序';
+        if (ascItem) ascItem.innerHTML = `<i class="fa-solid fa-arrow-up"></i> ${t.sortAsc}`;
+        if (descItem) descItem.innerHTML = `<i class="fa-solid fa-arrow-down"></i> ${t.sortDesc}`;
+        if (unsortItem) unsortItem.innerHTML = `<i class="fa-solid fa-xmark"></i> ${t.sortUnsort}`;
+    });
+    const filterSelect = document.getElementById('record-name-filter');
+    if (filterSelect) {
+        const translationsMap = {
+            equals: t.filter_equals,
+            not_equals: t.filter_not_equals,
+            starts_with: t.filter_starts_with,
+            is: t.filter_is
+        };
+
+        Array.from(filterSelect.options).forEach(opt => {
+            const key = opt.value;
+            if (translationsMap[key]) {
+                opt.textContent = translationsMap[key];
+            }
+        });
+    }
+    const moduleList = document.getElementById('modules-list');
+    if (moduleList && t) {
+        Array.from(moduleList.options).forEach(option => {
+            const translated = t[option.value];
+            if (translated) {
+                option.textContent = translated;
+            }
+        });
+    }
+    const moduleSelect = document.getElementById('module');
+    const modulesList = document.getElementById('modules-list');
+
+    if (moduleSelect && t) {
+        Array.from(moduleSelect.options).forEach(option => {
+            const translated = t[option.textContent.trim()];
+            if (translated) {
+                option.textContent = translated;
+            }
+        });
+    }
+
+    if (modulesList && t) {
+        Array.from(modulesList.options).forEach(option => {
+            const translated = t[option.value] || t[option.textContent.trim()];
+            if (translated) {
+                option.textContent = translated;
+            }
+        });
+    }
+
+    const rejectionReasonSelect = document.getElementById('rejectionReason');
+    if (rejectionReasonSelect && t) {
+        Array.from(rejectionReasonSelect.options).forEach(option => {
+            // Try translation key by value first
+            let key = `reason_${option.value}`;
+            if (t[key]) {
+                option.textContent = t[key];
+            }
+            // Fallback: Try using display text as key
+            else {
+                key = `reason_${option.textContent.trim()}`;
+                if (t[key]) {
+                    option.textContent = t[key];
+                }
+            }
+        });
+    }
+}
+
+function validateTranslations(translations, fallback) {
+    for (const key in fallback) {
+        if (!(key in translations)) {
+            console.warn(`Missing translation key: ${key}`);
+            translations[key] = fallback[key];
+        }
+    }
+    return translations;
+}
+function loadTranslation(langCode) {
+    console.log(langCode);
+
+    fetch(`translations/${langCode}.json`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Translation file not found. Falling back to English.");
+            }
+            return response.json();
+        })
+        .then(translations => {
+            if (langCode !== 'en') {
+                // Load English as fallback to validate against
+                fetch('translations/en.json')
+                    .then(enRes => enRes.json())
+                    .then(enTranslations => {
+                        t = validateTranslations(translations, enTranslations);
+                        console.log(`Translations loaded for: ${langCode}`);
+                        applyTranslations();
+                    });
+            } else {
+                t = translations;
+                console.log(`Translations loaded for: ${langCode}`);
+                applyTranslations();
+            }
+        })
+        .catch(error => {
+            console.warn(error.message);
+            if (langCode !== 'en') {
+                loadTranslation('en');
+            }
+        });
+}
+
+ZOHO.embeddedApp.init().then(() => {
+    ZOHO.CRM.CONFIG.getCurrentUser().then(data => {
+        let userLocale = data.users[0].locale || 'en';
+
+        let langCode = userLocale;
+
+        console.log(langCode);
+        // Normalize Chinese variants
+        if (userLocale === 'zh_CN' || userLocale === 'zh_TW') {
+            langCode = 'zh';
+        }
+
+        ZAGlobal.userLang = langCode;
+        loadTranslation(langCode); // Now only applyTranslations() will run after loading
+    }).catch(error => {
+        console.error('Error fetching current user:', error);
+        loadTranslation('en');
+    });
+}).catch(error => {
+    console.error('Error initializing Zoho SDK:', error);
 });
 
-    document.querySelectorAll('.approve-btn .btn-label').forEach(el => el.innerText = "批准");
-    document.querySelectorAll('.delegate-btn .btn-label').forEach(el => el.innerText = "委派");
-    document.querySelectorAll('.reject-btn .btn-label').forEach(el => el.innerText = "拒绝");
-}
-    
-    // document.getElementById('searchbtn').innerText = "搜索";
-    // document.getElementById('resetTableBtn').innerText = "重置";
-    // document.querySelector('._comments').placeholder = "评论";
-    // document.getElementById('doneBtn').innerText = "完毕";
-    // document.getElementById('clearBtn').innerText = "取消";
-    // document.querySelector('.moduleclass').innerHTML = "选择特定模块";
-    // document.getElementById('popup_header').innerText = "过滤器列表";
-
-
-
-// async function filterRecords() {
-//     let filtered_flag = false;
-//     let Module = document.getElementById('modules-list');
-//     let searchKey = document.getElementById('record-name-filter-input');
-//     let recordName_filter_type = document.getElementById('record-name-filter');
-
-//     document.getElementById('cta-filter').addEventListener('click', async (e) => {
-//         e.preventDefault();
-//         let res = await ZOHO.CRM.API.getApprovalRecords({ type: "awaiting" });
-//         let data = res.data;
-
-//         if (searchKey.value.trim() === '') {
-//             ZAGlobal.triggerToast('Enter a key to search', 1000, 'info');
-//             searchKey.focus();
-//             return;
-//         }
-
-//         const searchValue = searchKey.value.trim().toLowercase();
-
-//         switch (recordName_filter_type.value) {
-//             case 'equals':
-//                 ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase().includes(searchValue))));
-//                 break;
-//             case 'not_equals':
-//                 ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (!rec.entity.name.toLowerCase().includes(searchValue))))
-//                 break;
-//             case 'starts_with':
-//                 ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase().startsWith(searchValue))))
-//                 break;
-//             case 'is':
-//                 ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase() === searchValue)))
-//                 break;
-//             default:
-//                 console.log('default case');
-//                 break;
-//         }
-//         filtered_flag = true;
-//         ZAGlobal.reRenderTableBody();
-//     })
-//     document.getElementById('cta-clear-filter').addEventListener('click', (e) => {
-//         e.preventDefault();
-//         if (filtered_flag) {
-//             filtered_flag = false;
-//             searchKey.value = '';
-//             ZAGlobal.filteredRecords = ZAGlobal.allRecords;
-//             ZAGlobal.reRenderTableBody();
-//         } else {
-//             ZAGlobal.triggerToast('Nothing to Clear! No Filter Applied', 1000, 'info');
-//         }
-//     })
-// }
-
-
-// document.getElementById('filter-icon').addEventListener('click', (e) => {
-//     e.preventDefault();
-//     document.querySelector('#moduleContainer').classList.toggle('disabled');
-//     document.querySelector('.filter-div').classList.toggle('hidden');
-// })
-
+//sakthi code
 async function filterRecords() {
     let filtered_flag = false;
     let Module = document.getElementById('modules-list');
-    let searchKey = document.getElementById('record-name-filter-input');
+    let searchInput = document.getElementById('record-name-filter-input');
     let recordName_filter_type = document.getElementById('record-name-filter');
+    let searchBtn = document.getElementById('cta_filter');
+    let clearBtn = document.getElementById('cta_clear_filter');
 
-    document.getElementById('cta-filter').addEventListener('click', async (e) => {
+
+    searchInput.placeholder = t["record-name-filter-input"];
+    searchBtn.title = t["search_tooltip"] || "Enter text to search";
+
+    searchBtn.disabled = true;
+    searchBtn.style.opacity = "0.5";
+    searchBtn.style.cursor = "not-allowed";
+
+    // Enable/disable search button based on input
+    searchInput.addEventListener('input', () => {
+        const hasText = searchInput.value.trim().length > 0;
+        searchBtn.disabled = !hasText;
+        searchBtn.style.opacity = hasText ? "1" : "0.5";
+        searchBtn.style.cursor = hasText ? "pointer" : "not-allowed";
+    });
+
+    searchBtn.addEventListener('click', async (e) => {
         e.preventDefault();
 
         let res = await ZOHO.CRM.API.getApprovalRecords({ type: "awaiting" });
         let data = res.data;
 
-        if (searchKey.value.trim() === '') {
-            ZAGlobal.triggerToast('Enter a key to search', 1000, 'info');
-            searchKey.focus();
+        if (searchInput.value.trim() === '') {
+            ZAGlobal.triggerToast(t.toast_enter_search_key, 1000, 'info');
+            searchInput.focus();
             return;
         }
 
-        const searchValue = searchKey.value.trim().toLowerCase();
+        const searchValue = searchInput.value.trim().toLowerCase();
 
         switch (recordName_filter_type.value) {
             case 'equals':
@@ -889,15 +938,19 @@ async function filterRecords() {
         ZAGlobal.reRenderTableBody();
     });
 
-    document.getElementById('cta-clear-filter').addEventListener('click', (e) => {
+
+    clearBtn.addEventListener('click', (e) => {
         e.preventDefault();
         if (filtered_flag) {
             filtered_flag = false;
-            searchKey.value = '';
+            searchInput.value = '';
+            searchBtn.disabled = true;
+            searchBtn.style.opacity = "0.5";
+            searchBtn.style.cursor = "not-allowed";
             ZAGlobal.filteredRecords = ZAGlobal.allRecords;
             ZAGlobal.reRenderTableBody();
         } else {
-            ZAGlobal.triggerToast('Nothing to Clear! No Filter Applied', 1000, 'info');
+            ZAGlobal.triggerToast(t.toast_nothing_to_clear, 1000, 'info');
         }
     });
 }
@@ -915,14 +968,17 @@ document.getElementById('filter-icon').addEventListener('click', (e) => {
 let tblHeader = document.querySelector("thead");
 let tblBody = document.querySelector("._tbody");
 let allHeadersList = Array.from(tblHeader.querySelectorAll("tr")[0].children);
-let selectedItems = []; 
+let selectedItems = [];
 
 tblHeader.addEventListener("click", (e) => {
     if (e.target === allHeadersList[0] || e.target === document.querySelector('#selectAllCheckbox')) {
         e.stopImmediatePropagation();
         return;
     }
-    let dropdown = (e.target.closest("th")).querySelector(".dropdown-menu")
+    let th = e.target.closest("th");
+    let dropdown = th?.querySelector(".dropdown-menu");
+    if (!dropdown) return;
+
     dropdown.style.display = dropdown.style.display === "flex" ? "none" : "flex";
 
 
@@ -936,33 +992,27 @@ tblHeader.addEventListener("click", (e) => {
 
         currentDropDown.addEventListener("click", (event) => {
             let clickedBtn = event.target.closest("li");
-            if (!clickedBtn) 
-            return;
+            if (!clickedBtn)
+                return;
 
             let selectedValue = clickedBtn.innerText.trim();
             selectedItems.push(selectedValue);
             document.querySelectorAll('.dropdown-menu li').forEach(item => {
                 if (selectedItems.includes(item.innerText.trim())) {
-                    item.classList.add('disabled'); // Add disabled class to prevent selection
+                    item.classList.add('disabled');
                 } else {
-                    item.classList.remove('disabled'); // Remove disabled class if not selected
+                    item.classList.remove('disabled');
                 }
             });
 
             document.querySelectorAll(".dropdown-menu li").forEach(item => item.classList.remove("selected"));
             clickedBtn.classList.add("selected");
 
-            // currentDropDown.querySelectorAll("li").forEach(item => {
-            //     item.classList.remove("selected");
-            // });
-            // clickedBtn.classList.add("selected");
-
-            
             let allRows = Array.from(tblBody.rows);
             let descArr = [];
             let indexOfColumn = allHeadersList.indexOf(currentDropDown.closest("th"));
             let allValuesAreSame = true;
-            
+
             // Highlight current column
             allHeadersList.forEach(header => header.classList.remove("active-sorted-column"));
             currentDropDown.closest("th").classList.add("active-sorted-column");
@@ -980,46 +1030,46 @@ tblHeader.addEventListener("click", (e) => {
             // if (allValuesAreSame) {
             //     return; 
             // }       
-            
+
             allRows.sort((rowA, rowB) => {
                 let cellA = rowA.cells[indexOfColumn].innerText;
                 let cellB = rowB.cells[indexOfColumn].innerText;
                 // return cellA.localeCompare(cellB);
 
-                if (cellA.includes("days ago") && cellB.includes('days ago')){
+                if (cellA.includes("days ago") && cellB.includes('days ago')) {
                     let daysA = parseInt(cellA.split(' ')[0]);
                     let daysB = parseInt(cellB.split(' ')[0]);
                     return daysA - daysB;
-            }
-            if (cellA.includes(',') && cellB.includes(',')) {
-                let dateA = new Date(cellA);
-                let dateB = new Date(cellB);
-                return dateA - dateB;   
-            }
-            return cellA.localeCompare(cellB);
+                }
+                if (cellA.includes(',') && cellB.includes(',')) {
+                    let dateA = new Date(cellA);
+                    let dateB = new Date(cellB);
+                    return dateA - dateB;
+                }
+                return cellA.localeCompare(cellB);
             });
             if (event.target.classList.contains("desc") || event.target.classList.contains("fa-arrow-down")) {
                 allRows.sort((rowA, rowB) => {
                     let cellA = rowA.cells[indexOfColumn].innerText;
                     let cellB = rowB.cells[indexOfColumn].innerText;
                     // return cellA.localeCompare(cellB);
-    
-                    if (cellA.includes("days ago") && cellB.includes('days ago')){
+
+                    if (cellA.includes("days ago") && cellB.includes('days ago')) {
                         let daysA = parseInt(cellA.split(' ')[0]);
                         let daysB = parseInt(cellB.split(' ')[0]);
                         return daysB - daysA;
-                }
-                if (cellA.includes(',') && cellB.includes(',')) {
-                    let dateA = new Date(cellA);
-                    let dateB = new Date(cellB);
-                    return dateB - dateA;   
-                }
-                return cellB.localeCompare(cellA);
+                    }
+                    if (cellA.includes(',') && cellB.includes(',')) {
+                        let dateA = new Date(cellA);
+                        let dateB = new Date(cellB);
+                        return dateB - dateA;
+                    }
+                    return cellB.localeCompare(cellA);
                 });
-                allRows.forEach(row =>{
+                allRows.forEach(row => {
                     tblBody.appendChild(row);
                 });
-            }   
+            }
             else if (event.target.classList.contains("asc") || event.target.classList.contains("fa-arrow-up")) {
                 allRows.forEach(row => {
                     tblBody.appendChild(row)
@@ -1049,3 +1099,319 @@ window.addEventListener("click", (e) => {
 });
 
 // sorting related ends here.
+
+
+
+// Function to filter records based on the selected module
+// function filterRecordsByModule(selectedModule) {
+//     if (!selectedModule || selectedModule === 'AllModules') {
+//         ZAGlobal.filteredRecords = ZAGlobal.allRecords;
+//     } else {
+//         ZAGlobal.filteredRecords = ZAGlobal.allRecords.filter(record => record.module === selectedModule);
+//     }
+//     ZAGlobal.reRenderTableBody();
+// }
+
+// Initialize the module selection behavior
+// function initializeModuleSelection(modules) {
+//     populateModules(modules);
+//     $('#module').on('change', handleModuleSelection);
+// }
+
+
+//To send the selected data to the selected record
+// document.querySelector('tbody').addEventListener('change', function (event) {
+//     if (event.target.type === 'checkbox') {
+//         const recordId = event.target.dataset.id;
+//         if (event.target.checked) {
+//             ZAGlobal.selectedRecords.push(recordId);
+//         } else {
+//             const index = ZAGlobal.selectedRecords.indexOf(recordId);
+//             if (index > -1) {
+//                 ZAGlobal.selectedRecords.splice(index, 1);
+//             }
+//         }
+
+//         ZAGlobal.reRenderTableBody();
+//         const rowCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+//         const headerCheckbox = document.querySelector('#selectAllCheckbox');
+//         updateHeaderCheckboxState(rowCheckboxes, headerCheckbox);
+//     }
+// });
+
+// const translations = {
+// en: {
+//     title: "Bulk Record Approval",
+//     approve: "Approve",
+//     reject: "Reject",
+//     totalRecords: "Total Records: ",
+//     cancel: "Cancel",
+//     commentLabel: "Comment",
+//     commentPlaceholder: "Add your comments here (Optional)",
+//     userLabel: "Users",
+//     rejectionReasonLabel: "Rejection Reason",
+//     popupTitle: "Bulk Record Approval",
+//     recordName: "Record Name",
+//     approvalProcess: "Approval Process",
+//     module: "Module",
+//     createdDate: "Created Date",
+//     noOfDays: "No. of days",
+//     action: "Action",
+//     sortAsc: "Asc (A-Z)",
+//     sortDesc: "Desc (Z-A)",
+//     sortUnsort: "Unsort",
+//     delegate: "Delegate",
+//     cta_filter: "Search",
+//     cta_clear_filter: "Clear",
+//     approveBtn: "Approve",
+//     rejectBtn: "Reject",
+//     delegateBtn: "Delegate",
+//     approveTitle: "Approve Records",
+//     rejectTitle: "Reject Records",
+//     delegateTitle: "Delegate Records",
+//     paginationFooter: "No of records",
+//     noRecordsAvailable: "No records available to approve/reject",
+// },
+// zh: {
+//     title: "批量记录批准",
+//     approve: "批准",
+//     reject: "拒绝",
+//     totalRecords: "总记录数：",
+//     cancel: "取消",
+//     commentLabel: "评论",
+//     commentPlaceholder: "在此添加您的评论（可选）",
+//     userLabel: "用户",
+//     rejectionReasonLabel: "拒绝原因",
+//     popupTitle: "批量记录批准",
+//     recordName: "记录名称",
+//     approvalProcess: "审批流程名称",
+//     module: "模块",
+//     createdDate: "创建时间",
+//     noOfDays: "创建时间",
+//     action: "行动",
+//     sortAsc: "升序（A-Z）",
+//     sortDesc: "降序（Z-A）",
+//     sortUnsort: "取消排序",
+//     delegate: "委派",
+//     cta_filter: "教会",
+//     cta_clear_filter: "清除",
+//     approveBtn: "批准",
+//     rejectBtn: "拒绝",
+//     delegateBtn: "委派",
+//     approveTitle: "批准记录",
+//     rejectTitle: "拒绝记录",
+//     delegateTitle: "委派记录",
+//     paginationFooter: "记录数",
+//     noRecordsAvailable: "没有可批准/拒绝的记录",
+// }
+// };
+
+
+// let t = {}; // global translation object
+
+// function applyTranslations(lang) {
+//     // t = translations[lang] || translations.en;
+
+//     document.getElementById('title').innerText = t.title;
+//     document.querySelector('.approve').innerText = t.approve;
+//     document.querySelector('.reject').innerText = t.reject;
+//     document.getElementById('totalRecordsCount').innerHTML = `${t.totalRecords} <strong>${ZAGlobal.allRecords.length}</strong>`;
+//     document.getElementById('cancelPopupBtn').innerText = t.cancel;
+
+//     document.querySelector('label[for="comment"]').innerText = t.commentLabel;
+//     document.getElementById('comment').placeholder = t.commentPlaceholder;
+//     document.getElementById('cta_filter').innerHTML = t.cta_filter;
+//     document.getElementById('cta_clear_filter').innerHTML = t.cta_clear_filter;
+
+//     document.querySelector('label[for="userSelect"]').innerText = t.userLabel;
+//     document.querySelector('label[for="rejectionReason"]').innerText = t.rejectionReasonLabel;
+//     document.getElementById('popupTitle').innerText = t.popupTitle;
+
+//     // Table headers
+//     document.querySelector('#recordNameHeader .tbl-heading').innerText = t.recordName;
+//     document.querySelector('#approvalProcessNameHeader .tbl-heading').innerText = t.approvalProcess;
+//     document.querySelector('#moduleIdHeader .tbl-heading').innerText = t.module;
+//     document.querySelector('#dateCreatedBy .tbl-heading').innerText = t.createdDate;
+//     document.querySelector('.no-of-days .tbl-heading').innerText = t.noOfDays;
+//     document.querySelector('#action').innerText = t.action;
+
+//     document.querySelectorAll('.dropdown-menu').forEach(menu => {
+//         const ascItem = menu.querySelector('.asc');
+//         const descItem = menu.querySelector('.desc');
+//         const unsortItem = menu.querySelector('.unsort');
+
+//         if (ascItem) ascItem.innerHTML = `<i class="fa-solid fa-arrow-up"></i> ${t.sortAsc}`;
+//         if (descItem) descItem.innerHTML = `<i class="fa-solid fa-arrow-down"></i> ${t.sortDesc}`;
+//         if (unsortItem) unsortItem.innerHTML = `<i class="fa-solid fa-xmark"></i> ${t.sortUnsort}`;
+//     });
+
+//     document.querySelectorAll('.approve-btn .btn-label').forEach(el => el.innerText = t.approve);
+//     document.querySelectorAll('.delegate-btn .btn-label').forEach(el => el.innerText = t.delegate);
+//     document.querySelectorAll('.reject-btn .btn-label').forEach(el => el.innerText = t.reject);
+// }
+
+// ZOHO.embeddedApp.init().then(function () {
+//     ZOHO.CRM.CONFIG.getCurrentUser().then(function (data) {
+//         var userLanguage = data.users[0].locale || 'en';
+//         loadTranslation(userLanguage);
+//         if (userLanguage === 'zh_CN' || userLanguage === 'zh_TW') {
+//             langCode = 'zh';
+//         }
+
+//         ZAGlobal.userLang = langCode;
+//         applyTranslations(langCode);
+//     }).catch(function (error) {
+//         console.error('Error fetching current user:', error);
+//         applyTranslations('en');
+//     });
+// }).catch(function (error) {
+//     console.error('Error initializing SDK:', error);
+// });
+
+// function loadTranslation(langCode) {
+//     fetch(`/translations/${langCode}.json`)
+//         .then(response => {
+//             console.log(`Loading translations for language: ${langCode}`);
+//             if (!response.ok) {
+//                 throw new Error("Translation file not found. Falling back to English.");
+//             }
+//             return response.json();
+//         })
+//         .then(translations => {
+//             window.t = translations;  // Make it globally accessible
+//             applyTranslations();     // Function to update UI
+//         })
+//         .catch(error => {
+//             console.warn(error.message);
+//             if (langCode !== 'en') {
+//                 loadTranslation('en'); // fallback to English
+//             }
+//         });
+// }
+
+
+// ZOHO.embeddedApp.init().then(function () {
+//     ZOHO.CRM.CONFIG.getCurrentUser().then(function (data) {
+//         var userLanguage = data.users[0].locale;
+
+//         if (userLanguage === 'zh_CN' || userLanguage === 'zh_TW') {
+//             loadChineseTranslations();
+//         } else {
+//             loadEnglishTranslations();
+//         }
+
+//     }).catch(function (error) {
+//         console.error('Error fetching current user:', error);
+//     });
+// }).catch(function (error) {
+//     console.error('Error initializing SDK:', error);
+// });
+
+// function loadEnglishTranslations() {
+//     // console.log("Defualt eng lan");
+// }
+
+// function loadChineseTranslations() {
+//     console.log("Loading Chinese translations...");
+//     document.getElementById('title').innerHTML = "批量记录批准";
+//     document.querySelector('.approve').innerText = "批准";
+//     document.querySelector('.reject').innerText = "拒绝";
+//     document.getElementById('totalRecordsCount').innerHTML = "总记录数：<strong>" + ZAGlobal.allRecords.length + "</strong>";
+//     document.getElementById('cancelPopupBtn').textContent = "取消";
+//     document.querySelector('label[for="comment"]').textContent = "评论";
+//     document.getElementById('comment').placeholder = "在此添加您的评论（可选）";
+//     document.querySelector('label[for="userSelect"]').textContent = "用户";
+//     document.querySelector('label[for="rejectionReason"]').textContent = "拒绝原因";
+//     document.getElementById('popupTitle').innerHTML = "批量记录批准";
+
+//     //table header
+//     document.querySelector('#recordNameHeader .tbl-heading').innerText = "记录名称";
+//     document.querySelector('#approvalProcessNameHeader .tbl-heading').innerText = "审批流程名称";
+//     document.querySelector('#moduleIdHeader .tbl-heading').innerText = "模块";
+//     document.querySelector('#dateCreatedBy .tbl-heading').innerText = "创建时间";
+//     document.querySelector('.no-of-days .tbl-heading').innerText = "创建时间";
+//     document.querySelector('#action').innerText = "行动";
+
+//     document.querySelectorAll('.dropdown-menu').forEach(menu => {
+//     const ascItem = menu.querySelector('.asc');
+//     const descItem = menu.querySelector('.desc');
+//     const unsortItem = menu.querySelector('.unsort');
+
+//     if (ascItem) ascItem.innerHTML = '<i class="fa-solid fa-arrow-up"></i> 升序（A-Z）';
+//     if (descItem) descItem.innerHTML = '<i class="fa-solid fa-arrow-down"></i> 降序（Z-A）';
+//     if (unsortItem) unsortItem.innerHTML = '<i class="fa-solid fa-xmark"></i> 取消排序';
+// });
+
+//     document.querySelectorAll('.approve-btn .btn-label').forEach(el => el.innerText = "批准");
+//     document.querySelectorAll('.delegate-btn .btn-label').forEach(el => el.innerText = "委派");
+//     document.querySelectorAll('.reject-btn .btn-label').forEach(el => el.innerText = "拒绝");
+// }
+
+// document.getElementById('searchbtn').innerText = "搜索";
+// document.getElementById('resetTableBtn').innerText = "重置";
+// document.querySelector('._comments').placeholder = "评论";
+// document.getElementById('doneBtn').innerText = "完毕";
+// document.getElementById('clearBtn').innerText = "取消";
+// document.querySelector('.moduleclass').innerHTML = "选择特定模块";
+// document.getElementById('popup_header').innerText = "过滤器列表";
+
+
+
+// async function filterRecords() {
+//     let filtered_flag = false;
+//     let Module = document.getElementById('modules-list');
+//     let searchKey = document.getElementById('record-name-filter-input');
+//     let recordName_filter_type = document.getElementById('record-name-filter');
+
+//     document.getElementById('cta_filter').addEventListener('click', async (e) => {
+//         e.preventDefault();
+//         let res = await ZOHO.CRM.API.getApprovalRecords({ type: "awaiting" });
+//         let data = res.data;
+
+//         if (searchKey.value.trim() === '') {
+//             ZAGlobal.triggerToast('Enter a key to search', 1000, 'info');
+//             searchKey.focus();
+//             return;
+//         }
+
+//         const searchValue = searchKey.value.trim().toLowercase();
+
+//         switch (recordName_filter_type.value) {
+//             case 'equals':
+//                 ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase().includes(searchValue))));
+//                 break;
+//             case 'not_equals':
+//                 ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (!rec.entity.name.toLowerCase().includes(searchValue))))
+//                 break;
+//             case 'starts_with':
+//                 ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase().startsWith(searchValue))))
+//                 break;
+//             case 'is':
+//                 ZAGlobal.filteredRecords = data.filter(rec => ((rec.module === Module.value) && (rec.entity.name.toLowerCase() === searchValue)))
+//                 break;
+//             default:
+//                 console.log('default case');
+//                 break;
+//         }
+//         filtered_flag = true;
+//         ZAGlobal.reRenderTableBody();
+//     })
+//     document.getElementById('cta_clear_filter').addEventListener('click', (e) => {
+//         e.preventDefault();
+//         if (filtered_flag) {
+//             filtered_flag = false;
+//             searchKey.value = '';
+//             ZAGlobal.filteredRecords = ZAGlobal.allRecords;
+//             ZAGlobal.reRenderTableBody();
+//         } else {
+//             ZAGlobal.triggerToast('Nothing to Clear! No Filter Applied', 1000, 'info');
+//         }
+//     })
+// }
+
+
+// document.getElementById('filter-icon').addEventListener('click', (e) => {
+//     e.preventDefault();
+//     document.querySelector('#moduleContainer').classList.toggle('disabled');
+//     document.querySelector('.filter-div').classList.toggle('hidden');
+// })
