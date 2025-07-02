@@ -28,13 +28,12 @@ ZOHO.embeddedApp.on("PageLoad", function (data) {
 function populateModules(modules) {
     const select = document.getElementById('module');
     select.innerHTML = '';
-    
 
     const allModulesOption = document.createElement('option');
-    allModulesOption.value = 'AllModules';
-    allModulesOption.textContent = t['All_Modules'] ; // Use translation or fallback
-        allModulesOption.selected = true;
-        select.appendChild(allModulesOption);
+    // allModulesOption.value = 'All_Modules';
+    allModulesOption.textContent = t['All_Modules'] || 'All Modules'; 
+    allModulesOption.selected = true;
+    select.appendChild(allModulesOption);
 
     modules.forEach(module => {
         if (module.creatable == true && module.visibility == 1) {
@@ -68,6 +67,20 @@ function populateModules(modules) {
     });
     ZAGlobal.filteredRecords = [...ZAGlobal.allRecords];
 }
+
+// Function to handle when the module is selected
+function handleModuleSelection() {
+    const selectedModule = $('#module').val();
+
+    if (selectedModule === 'AllModules') {
+        ZAGlobal.filteredRecords = ZAGlobal.allRecords;
+    } else {
+        ZAGlobal.filteredRecords = ZAGlobal.allRecords.filter(record => record.module === selectedModule);
+    }
+
+    ZAGlobal.reRenderTableBody();
+}
+
 
 async function populateUserList() {
     try {

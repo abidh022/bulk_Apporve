@@ -2,8 +2,8 @@ function applyTranslations() {
     if (!t) return;
 
     document.getElementById('title').innerText = t.title;
-    document.getElementById('bulkReject').innerText = t.bulkReject;
-    document.getElementById('bulkApprove').innerText = t.bulkApprove;
+    // document.getElementById('bulkReject').innerText = t.bulkReject;
+    // document.getElementById('bulkApprove').innerText = t.bulkApprove;
     document.querySelector('.approve').innerText = t.approve;
     document.querySelector('.reject').innerText = t.reject;
     document.getElementById('cancelPopupBtn').innerText = t.cancel;
@@ -20,11 +20,11 @@ function applyTranslations() {
     document.querySelector('label[for="rejectionReason"]').innerText = t.rejectionReasonLabel;
     document.getElementById('popupTitle').innerText = t.popupTitle;
 
-     const filterInput = document.getElementById('record-name-filter-input');
+    const filterInput = document.getElementById('record-name-filter-input');
     if (filterInput && t["record-name-filter-input"]) {
         filterInput.placeholder = t["record-name-filter-input"];
-        console.log(`Filter input placeholder set to: ${t["record-name-filter-input"]}`);
-        
+        // console.log(`Filter input placeholder set to: ${t["record-name-filter-input"]}`);
+
     }
 
     // Table headers
@@ -44,7 +44,7 @@ function applyTranslations() {
         if (descItem) descItem.innerHTML = `<i class="fa-solid fa-arrow-down"></i> ${t.sortDesc}`;
         if (unsortItem) unsortItem.innerHTML = `<i class="fa-solid fa-xmark"></i> ${t.sortUnsort}`;
     });
-       const filterSelect = document.getElementById('record-name-filter');
+    const filterSelect = document.getElementById('record-name-filter');
     if (filterSelect) {
         const translationsMap = {
             equals: t.filter_equals,
@@ -69,31 +69,58 @@ function applyTranslations() {
             }
         });
     }
-        const moduleSelect = document.getElementById('module');
-        const modulesList = document.getElementById('modules-list');
+    const moduleSelect = document.getElementById('module');
+    const modulesList = document.getElementById('modules-list');
 
-        if (moduleSelect && t) {
-            Array.from(moduleSelect.options).forEach(option => {
-                const translated = t[option.textContent.trim()];
-                if (translated) {
-                    option.textContent = translated;
-                }
-            });
-        }
+    if (moduleSelect && t) {
+        Array.from(moduleSelect.options).forEach(option => {
+            const translated = t[option.textContent.trim()];
+            if (translated) {
+                option.textContent = translated;
+            }
+        });
+    }
 
-        if (modulesList && t) {
-            Array.from(modulesList.options).forEach(option => {
+    if (modulesList && t) {
+        Array.from(modulesList.options).forEach(option => {
             const translated = t[option.value] || t[option.textContent.trim()];
-                if (translated) {
-                    option.textContent = translated;
+            if (translated) {
+                option.textContent = translated;
+            }
+        });
+    }
+
+    const rejectionReasonSelect = document.getElementById('rejectionReason');
+    if (rejectionReasonSelect && t) {
+        Array.from(rejectionReasonSelect.options).forEach(option => {
+            // Try translation key by value first
+            let key = `reason_${option.value}`;
+            if (t[key]) {
+                option.textContent = t[key];
+            }
+            // Fallback: Try using display text as key
+            else {
+                key = `reason_${option.textContent.trim()}`;
+                if (t[key]) {
+                    option.textContent = t[key];
                 }
-            });
-        }
+            }
+        });
+    }
 }
 
+function validateTranslations(translations, fallback) {
+    for (const key in fallback) {
+        if (!(key in translations)) {
+            console.warn(`Missing translation key: ${key}`);
+            translations[key] = fallback[key];
+        }
+    }
+    return translations;
+}
 function loadTranslation(langCode) {
     console.log(langCode);
-    
+
     fetch(`translations/${langCode}.json`)
         .then(response => {
             if (!response.ok) {
@@ -102,17 +129,29 @@ function loadTranslation(langCode) {
             return response.json();
         })
         .then(translations => {
-            console.log(`Translations loaded for: ${langCode}`);
-            t = translations;
-            applyTranslations();
+            if (langCode !== 'en') {
+                // Load English as fallback to validate against
+                fetch('translations/en.json')
+                    .then(enRes => enRes.json())
+                    .then(enTranslations => {
+                        t = validateTranslations(translations, enTranslations);
+                        console.log(`Translations loaded for: ${langCode}`);
+                        applyTranslations();
+                    });
+            } else {
+                t = translations;
+                console.log(`Translations loaded for: ${langCode}`);
+                applyTranslations();
+            }
         })
         .catch(error => {
             console.warn(error.message);
             if (langCode !== 'en') {
                 loadTranslation('en');
-            }   
-        });       
+            }
+        });
 }
+
 
 ZOHO.embeddedApp.init().then(() => {
     ZOHO.CRM.CONFIG.getCurrentUser().then(data => {

@@ -11,7 +11,7 @@ tblHeader.addEventListener("click", (e) => {
         e.stopImmediatePropagation();
         return;
     }
-  let th = e.target.closest("th");
+    let th = e.target.closest("th");
     let dropdown = th?.querySelector(".dropdown-menu");
     if (!dropdown) return;
 

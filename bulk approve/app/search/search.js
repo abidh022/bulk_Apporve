@@ -72,7 +72,7 @@ async function filterRecords() {
         ZAGlobal.reRenderTableBody();
     });
 
-    
+
     clearBtn.addEventListener('click', (e) => {
         e.preventDefault();
         if (filtered_flag) {
@@ -94,3 +94,4 @@ document.getElementById('filter-icon').addEventListener('click', (e) => {
     document.querySelector('#moduleContainer').classList.toggle('disabled');
     document.querySelector('.filter-div').classList.toggle('hidden');
 });
+
