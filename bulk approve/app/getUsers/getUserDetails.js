@@ -30,8 +30,8 @@ function populateModules(modules) {
     select.innerHTML = '';
 
     const allModulesOption = document.createElement('option');
-    // allModulesOption.value = 'All_Modules';
-    allModulesOption.textContent = t['All_Modules'] || 'All Modules'; 
+    allModulesOption.value = 'All_Modules'; 
+    allModulesOption.textContent = t['custom.APPROVAL.module.All_Modules'] || 'All Modules'; // Use translation or fallback
     allModulesOption.selected = true;
     select.appendChild(allModulesOption);
 
@@ -41,8 +41,12 @@ function populateModules(modules) {
             const option = document.createElement('option');
             option.value = module.api_name;
 
-            const translatedLabel = t[module.actual_plural_label] || module.actual_plural_label;
+             const rawLabel = module.api_name;
+            const translatedLabel = t[`custom.APPROVAL.module.${rawLabel}`] || module.actual_plural_label;
             option.textContent = translatedLabel;
+            
+            // const translatedLabel = t[module.actual_plural_label] || module.actual_plural_label;
+            // option.textContent = translatedLabel;
             // option.textContent = module.actual_plural_label;
             select.appendChild(option);
             const optionClone = option.cloneNode(true);   // Sakthi's Code
@@ -57,7 +61,7 @@ function populateModules(modules) {
         closeOnSelect: true,
         language: {
             noResults: function () {
-                return t.noResults || "No results found";
+                return t["custom.APPROVAL.noResults"] || "No results found";
             }
         }
     });
@@ -87,7 +91,7 @@ async function populateUserList() {
         const res = await ZOHO.CRM.API.getAllUsers({ Type: "AllUsers" });
 
         if (res.users && res.users.length === 0) {
-            ZAGlobal.triggerToast(t.toast_no_users, 3000, 'warning');
+            ZAGlobal.triggerToast(tt("toast_no_users"), 3000, 'warning');
             return;
         }
         $('#delegateSection').show();
@@ -95,13 +99,13 @@ async function populateUserList() {
         const userSelect = $('#userSelect');
         userSelect.empty();
 
-        userSelect.append(new Option('Choose User', '', false, false));
+        userSelect.append(new Option(t["custom.APPROVAL.chooseUser"] || "Select User", '', false, false));
         userSelect.find('option').first().attr('disabled', true);
 
         const activeUsers = res.users.filter(user => user.status === 'active');
 
         if (activeUsers.length === 0) {
-            ZAGlobal.triggerToast(t.toast_no_active_users, 3000, 'warning');
+            ZAGlobal.triggerToast(tt("toast_no_active_users"), 3000, 'warning');
         }
 
         activeUsers.forEach((user) => {
@@ -112,6 +116,6 @@ async function populateUserList() {
         });
 
     } catch (error) {
-        ZAGlobal.triggerToast(t.toast_fetch_user_failed, 3000, 'warning');
+        ZAGlobal.triggerToast(tt("toast_fetch_user_failed"), 3000, 'warning');
     }
 }

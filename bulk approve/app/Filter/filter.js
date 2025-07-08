@@ -31,7 +31,7 @@ async function filterRecords() {
         let data = res.data;
 
         if (searchInput.value.trim() === '') {
-            ZAGlobal.triggerToast(t.toast_enter_search_key, 1000, 'info');
+            ZAGlobal.triggerToast(tt("toast_enter_search_key"), 1000, 'info');
             searchInput.focus();
             return;
         }
@@ -84,7 +84,7 @@ async function filterRecords() {
             ZAGlobal.filteredRecords = ZAGlobal.allRecords;
             ZAGlobal.reRenderTableBody();
         } else {
-            ZAGlobal.triggerToast(t.toast_nothing_to_clear, 1000, 'info');
+            ZAGlobal.triggerToast(tt("toast_nothing_to_clear"), 1000, 'info');
         }
     });
 }

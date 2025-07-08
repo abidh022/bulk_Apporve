@@ -767,8 +767,7 @@ button.delegate-btn:hover {
 }
 
 
-#cta_filter,
-#cta_clear_filter {
+#cta_filter{
   width: max-content;
   padding: 5px 16px;
   cursor: pointer;
@@ -781,10 +780,29 @@ button.delegate-btn:hover {
   margin-bottom: 10px;
 }
 
-#cta_filter:hover,
-#cta_clear_filter:hover {
+#cta_clear_filter {
+  width: max-content;
+  padding: 5px 16px;
+  cursor: pointer;
+  border-radius: 5px;
+  background-color: #F6F8FC;
+  color: #313949;
+  outline: 0;
+  border-color: #d5d5d5;
+  align-self: flex-end;
+  margin-bottom: 10px;
+}
+
+
+#cta_filter:hover
+{
   border-color: #0056b3;
   background-color: #0056b3;
+}
+
+#cta_clear_filter:hover {
+  border-color: #c1c6cc;
+  background-color: #e9e9e9;
 }
 
 /* Sorting Related Style starts here. */

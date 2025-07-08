@@ -1,56 +1,60 @@
+function tt(key) {
+    return t[`custom.APPROVAL.${key}`] || `custom.APPROVAL.${key}`;
+}
+
 function applyTranslations() {
     if (!t) return;
 
-    document.getElementById('title').innerText = t.title;
-    // document.getElementById('bulkReject').innerText = t.bulkReject;
-    // document.getElementById('bulkApprove').innerText = t.bulkApprove;
-    document.querySelector('.approve').innerText = t.approve;
-    document.querySelector('.reject').innerText = t.reject;
-    document.getElementById('cancelPopupBtn').innerText = t.cancel;
+    // Titles and Buttons
+    document.getElementById('title').innerText = tt("title");
+    document.querySelector('.approve').innerText = tt("approve");
+    document.querySelector('.reject').innerText = tt("reject");
+    document.getElementById('cancelPopupBtn').innerText = tt("cancel");
 
-    document.querySelector('label[for="comment"]').innerText = t.commentLabel;
-    document.querySelector('label[for="otherReason"]').innerText = t.specifyLabel;
-    document.getElementById('otherReason').placeholder = t.specifyPlaceholder;
+    // Labels and Placeholders
+    document.querySelector('label[for="comment"]').innerText = tt("commentLabel");
+    document.querySelector('label[for="otherReason"]').innerText = tt("specifyLabel");
+    document.getElementById('otherReason').placeholder = tt("specifyPlaceholder");
+    document.getElementById('comment').placeholder = tt("commentPlaceholder");
+    document.getElementById('cta_filter').innerHTML = tt("cta_filter");
+    document.getElementById('cta_clear_filter').innerHTML = tt("cta_clear_filter");
 
-    document.getElementById('comment').placeholder = t.commentPlaceholder;
-    document.getElementById('cta_filter').innerHTML = t.cta_filter;
-    document.getElementById('cta_clear_filter').innerHTML = t.cta_clear_filter;
-
-    document.querySelector('label[for="userSelect"]').innerText = t.userLabel;
-    document.querySelector('label[for="rejectionReason"]').innerText = t.rejectionReasonLabel;
-    document.getElementById('popupTitle').innerText = t.popupTitle;
+    document.querySelector('label[for="userSelect"]').innerText = tt("userLabel");
+    document.querySelector('label[for="rejectionReason"]').innerText = tt("rejectionReasonLabel");
+    document.getElementById('popupTitle').innerText = tt("popupTitle");
 
     const filterInput = document.getElementById('record-name-filter-input');
-    if (filterInput && t["record-name-filter-input"]) {
-        filterInput.placeholder = t["record-name-filter-input"];
-        // console.log(`Filter input placeholder set to: ${t["record-name-filter-input"]}`);
-
+    if (filterInput) {
+        filterInput.placeholder = tt("record-name-filter-input");
     }
 
-    // Table headers
-    document.querySelector('#recordNameHeader .tbl-heading').innerText = t.recordName;
-    document.querySelector('#approvalProcessNameHeader .tbl-heading').innerText = t.approvalProcess;
-    document.querySelector('#moduleIdHeader .tbl-heading').innerText = t.module;
-    document.querySelector('#dateCreatedBy .tbl-heading').innerText = t.createdDate;
-    document.querySelector('.no-of-days .tbl-heading').innerText = t.noOfDays;
-    document.querySelector('#action').innerText = t.action;
+    // Table Headers
+    document.querySelector('#recordNameHeader .tbl-heading').innerText = tt("recordName");
+    document.querySelector('#approvalProcessNameHeader .tbl-heading').innerText = tt("approvalProcess");
+    document.querySelector('#moduleIdHeader .tbl-heading').innerText = tt("module");
+    document.querySelector('#dateCreatedBy .tbl-heading').innerText = tt("createdDate");
+    document.querySelector('.no-of-days .tbl-heading').innerText = tt("noOfDays");
+    document.querySelector('#action').innerText = tt("action");
 
+    // Sort Dropdowns
     document.querySelectorAll('.dropdown-menu').forEach(menu => {
         const ascItem = menu.querySelector('.asc');
         const descItem = menu.querySelector('.desc');
         const unsortItem = menu.querySelector('.unsort');
 
-        if (ascItem) ascItem.innerHTML = `<i class="fa-solid fa-arrow-up"></i> ${t.sortAsc}`;
-        if (descItem) descItem.innerHTML = `<i class="fa-solid fa-arrow-down"></i> ${t.sortDesc}`;
-        if (unsortItem) unsortItem.innerHTML = `<i class="fa-solid fa-xmark"></i> ${t.sortUnsort}`;
+        if (ascItem) ascItem.innerHTML = `<i class="fa-solid fa-arrow-up"></i> ${tt("sortAsc")}`;
+        if (descItem) descItem.innerHTML = `<i class="fa-solid fa-arrow-down"></i> ${tt("sortDesc")}`;
+        if (unsortItem) unsortItem.innerHTML = `<i class="fa-solid fa-xmark"></i> ${tt("sortUnsort")}`;
     });
+
+    // Filter Select Options
     const filterSelect = document.getElementById('record-name-filter');
     if (filterSelect) {
         const translationsMap = {
-            equals: t.filter_equals,
-            not_equals: t.filter_not_equals,
-            starts_with: t.filter_starts_with,
-            is: t.filter_is
+            equals: tt("filter_equals"),
+            not_equals: tt("filter_not_equals"),
+            starts_with: tt("filter_starts_with"),
+            is: tt("filter_is")
         };
 
         Array.from(filterSelect.options).forEach(opt => {
@@ -60,54 +64,43 @@ function applyTranslations() {
             }
         });
     }
-    const moduleList = document.getElementById('modules-list');
-    if (moduleList && t) {
-        Array.from(moduleList.options).forEach(option => {
-            const translated = t[option.value];
-            if (translated) {
-                option.textContent = translated;
-            }
-        });
-    }
-    const moduleSelect = document.getElementById('module');
-    const modulesList = document.getElementById('modules-list');
 
-    if (moduleSelect && t) {
-        Array.from(moduleSelect.options).forEach(option => {
-            const translated = t[option.textContent.trim()];
-            if (translated) {
-                option.textContent = translated;
-            }
-        });
-    }
+    // Modules List (Modules come from Zoho API, use module name directly)
+        const moduleSelect = document.getElementById('module');
+        const modulesList = document.getElementById('modules-list');
 
-    if (modulesList && t) {
-        Array.from(modulesList.options).forEach(option => {
-            const translated = t[option.value] || t[option.textContent.trim()];
-            if (translated) {
-                option.textContent = translated;
-            }
-        });
-    }
+        [moduleSelect, modulesList].forEach(select => {
+        if (!select) return;
 
+        const tryTranslate = () => {
+            if (select.options.length === 0) {
+            return setTimeout(tryTranslate, 50);
+            }
+
+            Array.from(select.options).forEach(opt => {
+            const raw = (opt.value || opt.textContent.trim()).replace(/\s+/g, "_"); // normalize
+            const key = `custom.APPROVAL.module.${raw}`;
+            const tr = t[key];
+            });
+        };
+
+        tryTranslate();
+        });
+
+    // Rejection Reasons
     const rejectionReasonSelect = document.getElementById('rejectionReason');
-    if (rejectionReasonSelect && t) {
+    if (rejectionReasonSelect) {
         Array.from(rejectionReasonSelect.options).forEach(option => {
-            // Try translation key by value first
-            let key = `reason_${option.value}`;
-            if (t[key]) {
-                option.textContent = t[key];
-            }
-            // Fallback: Try using display text as key
-            else {
-                key = `reason_${option.textContent.trim()}`;
-                if (t[key]) {
-                    option.textContent = t[key];
-                }
+            const baseKey = `custom.APPROVAL.reason.${option.value}`;
+            const fallbackKey = `custom.APPROVAL.reason${option.textContent.trim()}`;
+            const translation = t[baseKey] || t[fallbackKey];
+            if (translation) {
+                option.textContent = translation;
             }
         });
     }
 }
+
 
 function validateTranslations(translations, fallback) {
     for (const key in fallback) {
@@ -118,20 +111,22 @@ function validateTranslations(translations, fallback) {
     }
     return translations;
 }
+
+
 function loadTranslation(langCode) {
     console.log(langCode);
 
-    fetch(`translations/${langCode}.json`)
+    return fetch(`translations/${langCode}.json`)
         .then(response => {
             if (!response.ok) {
-                throw new Error("Translation file not found. Falling back to English.");
+                throw new Error(`Translation file for '${langCode}' not found (HTTP ${response.status}). Falling back to English.`);
             }
             return response.json();
         })
         .then(translations => {
             if (langCode !== 'en') {
                 // Load English as fallback to validate against
-                fetch('translations/en.json')
+                return fetch('translations/en.json')
                     .then(enRes => enRes.json())
                     .then(enTranslations => {
                         t = validateTranslations(translations, enTranslations);
@@ -147,11 +142,10 @@ function loadTranslation(langCode) {
         .catch(error => {
             console.warn(error.message);
             if (langCode !== 'en') {
-                loadTranslation('en');
+                return loadTranslation('en');
             }
         });
 }
-
 
 ZOHO.embeddedApp.init().then(() => {
     ZOHO.CRM.CONFIG.getCurrentUser().then(data => {
@@ -161,15 +155,38 @@ ZOHO.embeddedApp.init().then(() => {
 
         console.log(langCode);
         // Normalize Chinese variants
-        if (userLocale === 'zh_CN' || userLocale === 'zh_TW') {
+           if (langCode.startsWith('zh')) {
             langCode = 'zh';
-        }
+        } else if (langCode.startsWith('en')) {
+            langCode = 'en';}
+        // Add more if you have additional translations
 
+        console.log("Normalized langCode:", langCode);
         ZAGlobal.userLang = langCode;
-        loadTranslation(langCode); // Now only applyTranslations() will run after loading
+
+        // Load translations first, then fetch modules & populate
+        loadTranslation(langCode).then(() => {
+            return ZOHO.CRM.META.getModules();
+        }).then(data => {
+            if (data && Array.isArray(data.modules)) {
+                populateModules(data.modules);
+            }
+        }).catch(error => {
+            console.error('Error fetching modules:', error);
+        });
+
     }).catch(error => {
         console.error('Error fetching current user:', error);
-        loadTranslation('en');
+        // fallback: load English, then fetch modules & populate
+        loadTranslation('en').then(() => {
+            return ZOHO.CRM.META.getModules();
+        }).then(data => {
+            if (data && Array.isArray(data.modules)) {
+                populateModules(data.modules);
+            }
+        }).catch(error => {
+            console.error('Error fetching modules:', error);
+        });
     });
 }).catch(error => {
     console.error('Error initializing Zoho SDK:', error);

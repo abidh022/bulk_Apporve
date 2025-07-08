@@ -7,7 +7,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
         // Single record action
         const record = ZAGlobal.waitingRecords.find(rec => rec.entity.id == recordId);
         if (!record) {
-            ZAGlobal.triggerToast(t.toast_record_not_found, 3000, 'warning');
+            ZAGlobal.triggerToast(tt("toast_record_not_found"), 3000, 'warning');
             return;
         }
         recordsToProcess.push(record);
@@ -15,7 +15,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
         // Bulk action
         const checkedRecords = ZAGlobal.selectedRecords.length;
         if (checkedRecords === 0) {
-            ZAGlobal.triggerToast(t.toast_select_one_record, 3000, 'warning');
+            ZAGlobal.triggerToast(tt("toast_select_one_record"), 3000, 'warning');
             return;
         }
         recordsToProcess = ZAGlobal.waitingRecords.filter(rec => ZAGlobal.selectedRecords.includes(rec.entity.id));
@@ -28,9 +28,9 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
     document.getElementById('rejectionReason').value = 'selectReasonOption';
     document.getElementById('rejectionReasonSection').style.display = action === 'reject' ? 'block' : 'none';
     document.getElementById('otherReasonContainer').style.display = 'none';
-    document.getElementById('popupTitle').textContent = t[`${action}Title`];
-    document.getElementById('submitActionBtn').textContent = t[`${action}Btn`];
-    console.log("Button label:", t[`${action}Btn`]);
+    document.getElementById('popupTitle').textContent = tt(`${action}Title`);
+    document.getElementById('submitActionBtn').textContent = tt(`${action}Btn`);
+    // console.log("Button label:", t[`${action}Btn`]);
 
     const submitBtn = document.getElementById('submitActionBtn');
 
@@ -89,13 +89,13 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
         if (action === 'reject') {
             rejectionReason = $('#rejectionReason').val();
             if (rejectionReason === 'selectReasonOption') {
-                ZAGlobal.triggerToast(t.toast_select_rejection_reason, 3000, 'warning');
+                ZAGlobal.triggerToast(tt("toast_select_rejection_reason"), 3000, 'warning');
                 return;
             }
             if (rejectionReason === 'Other') {
                 otherReason = $('#otherReason').val().trim();
                 if (!otherReason) {
-                    ZAGlobal.triggerToast(t.toast_rejection_reason_required, 3000, 'warning');
+                    ZAGlobal.triggerToast(tt("toast_rejection_reason_required"), 3000, 'warning');
                     return;
                 }
                 comment = otherReason;
@@ -105,7 +105,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
         if (action === 'delegate') {
             selectedUser = $('#userSelect').val();
             if (!selectedUser) {
-                ZAGlobal.triggerToast(t.toast_select_user_delegate, 3000, 'warning');
+                ZAGlobal.triggerToast(tt("toast_select_user_delegate"), 3000, 'warning');
                 return;
             }
             comment = $('#comment').val().trim();

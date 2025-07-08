@@ -2,13 +2,14 @@
 function handleModuleSelection() {
     const selectedModule = $('#module').val();
 
-    if (selectedModule === 'AllModules') {
+    if (selectedModule === 'All_Modules') {
         ZAGlobal.filteredRecords = ZAGlobal.allRecords;
     } else {
         ZAGlobal.filteredRecords = ZAGlobal.allRecords.filter(record => record.module === selectedModule);
     }
 
     ZAGlobal.reRenderTableBody();
+    applyTranslations(); 
 }
 
 ZAGlobal.selectAll = function () {
@@ -37,6 +38,7 @@ ZAGlobal.selectAll = function () {
     });
 
     updateSelectAllCheckboxState(rowCheckboxes, headerCheckbox);
+    applyTranslations(); 
 };
 
 function updateHeaderCheckboxState(rowCheckboxes, headerCheckbox) {
@@ -133,6 +135,7 @@ function processAction(action, recordIds) {
     ZAGlobal.reRenderTableBody();
     updateSelectAllCheckboxState();
     updateSelectedCount();
+    applyTranslations(); 
 
 }
 
@@ -169,7 +172,7 @@ function updateSelectedCount() {
 
     if (count > 0) {
 
-        let translatedText = t.selectedCounterText.replace('${count}', count).replace('${plural}', count > 1 ? 's' : '');
+        let translatedText = t["custom.APPROVAL.selectedCounterText"].replace('${count}', count).replace('${plural}', count > 1 ? 's' : '');
         counterElement.textContent = translatedText;
         counterElement.style.display = 'block';
     } else {

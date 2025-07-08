@@ -22,7 +22,7 @@ var ZAGlobal = {
                 ZAGlobal.domainName = orgInfo.org[0].country_code || 'in';
                 ZAGlobal.orgId = orgInfo.org[0].domain_name;
             } catch (error) {
-                ZAGlobal.triggerToast(t.toast_fetch_org_error, 3000, 'error');
+                ZAGlobal.triggerToast(tt("toast_fetch_org_error"), 3000, 'error');
                 return;
             }
         }
@@ -32,8 +32,8 @@ var ZAGlobal = {
 
         if (noRecords || noFilteredRecords) {
             const noRecordsMessage = noRecords
-                ? (t.noRecordsAvailable || "No records found")
-                : (t.noFilteredRecords || "No records match your filter");
+                ? (t["custom.APPROVAL.noRecordsAvailable"] || "No records found")
+                : (t["custom.APPROVAL.noFilteredRecords"] || "No records match your filter");
             $('._tbody').html(`
                 <tr>
                 <td colspan="8" style="text-align: center; padding: 20px;">
@@ -54,7 +54,7 @@ var ZAGlobal = {
 
             const totalCountEl = document.getElementById('totalRecordsCount');
             if (totalCountEl) {
-                const label = t.totalRecords || 'Total Records';
+                const label = t["custom.APPROVAL.totalRecords"] ;
                 totalCountEl.innerHTML = `${label}: ${'0'}`;
             }
             // ZAGlobal.updatePagination();
@@ -86,15 +86,16 @@ var ZAGlobal = {
                     minute: '2-digit',
                     hour12: true
                 };
-                var formattedDate = initiatedTime.toLocaleString('en-IN', options);
+                let safeLocale = ['en', 'zh'].includes(ZAGlobal.userLang) ? ZAGlobal.userLang : 'en';
+                var formattedDate = initiatedTime.toLocaleString( safeLocale, options);
 
                 tbody += `<tr data-id="${record.entity.id}" data-module="${record.module}">
                             <td><input type="checkbox" data-id="${record.entity.id}" data-module="${record.module}" ${ZAGlobal.selectedRecords.includes(record.entity.id) ? 'checked' : ''}></td>
                             <td><a href= "https://crm.zoho.${ZAGlobal.domainName}/crm/${ZAGlobal.orgId}/tab/${record.module}/${record.entity.id}" target="_blank" class="record-link">${record.entity.name}</a></td>
                             <td>${record.rule.name}</td>
-                            <td>${record.module}</td>
+                            <td>${t[`custom.APPROVAL.module.${record.module}`] || record.module}</td>
                             <td>${formattedDate}</td>
-                            <td>${daysAgo} ${daysAgo === 1 ? t.dayAgo : t.daysAgo}</td>
+                            <td>${daysAgo} ${daysAgo === 1 ? t["custom.APPROVAL.dayAgo"] : t["custom.APPROVAL.daysAgo"]}</td>
                             <td class="action-buttons">
                                 <button class="approve-btn" data-id="${record.entity.id}"><span class="btn-label">Approve</span></button>
                                   <span class="slash">/</span>
@@ -112,17 +113,17 @@ var ZAGlobal = {
         updateSelectedCount();
         updateSelectAllCheckboxState();
 
-        // ✅ Updated logic to always show total or Nil
+        // ✅ Updated logic to always show total or 0
         const totalCountEl = document.getElementById('totalRecordsCount');
         if (totalCountEl) {
             const total = Array.isArray(ZAGlobal.filteredRecords) ? ZAGlobal.filteredRecords.length : 0;
-            const label = t.totalRecords || 'Total Records';
+            const label = t["custom.APPROVAL.totalRecords"] || 'Total Records';
             totalCountEl.innerHTML = `${label}: ${total === 0 ? ('0') : `<strong>${total}</strong>`}`;
         }
 
-        document.querySelectorAll('.approve-btn .btn-label').forEach(el => el.innerText = t.approve);
-        document.querySelectorAll('.delegate-btn .btn-label').forEach(el => el.innerText = t.delegate);
-        document.querySelectorAll('.reject-btn .btn-label').forEach(el => el.innerText = t.reject);
+        document.querySelectorAll('.approve-btn .btn-label').forEach(el => el.innerText = t["custom.APPROVAL.approve"]);
+        document.querySelectorAll('.delegate-btn .btn-label').forEach(el => el.innerText = t["custom.APPROVAL.delegate"]);
+        document.querySelectorAll('.reject-btn .btn-label').forEach(el => el.innerText = t["custom.APPROVAL.reject"]);
 
         let initialTBody = document.querySelector("._tbody");
         initialRows = Array.from(initialTBody.rows);
@@ -133,7 +134,7 @@ var ZAGlobal = {
         ZAGlobal.totalPages = Math.ceil(totalRecords / ZAGlobal.recordsPerPage);
 
         var paginationHtml = `
-            <span id="recordsLabel">${t.paginationFooter}</span>
+            <span id="recordsLabel">${t["custom.APPROVAL.paginationFooter"]}</span>
             <select id="recordsPerPage">
                 <option value="10" ${ZAGlobal.recordsPerPage === 10 ? 'selected' : ''}>10 </option>
                 <option value="20" ${ZAGlobal.recordsPerPage === 20 ? 'selected' : ''}>20 </option>
