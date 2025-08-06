@@ -34,7 +34,7 @@
   <div class="top">
     <div id="_till_SelectedRecordsCount">
       <!-- <input type="text" id="searchBar" placeholder="Search"> -->
-      <span class="filter-icon" data-tt="tooltip_search"><i class="fa-solid fa-filter icon" id="filter-icon"></i></span>
+      <span class="filter-icon"><i class="fa-solid fa-filter icon" id="filter-icon"></i></span>
       <div id="moduleContainer">
         <select id="module" class="selectbox">
         </select>
@@ -54,7 +54,7 @@
         <th id="recordNameHeader" data-column="recordName">
           <div class="tbl-hdr-inner-container">
             <span class="tbl-heading">Record Name</span>
-            <span class="menu-bar" data-tt="tooltip_sort"><i class="fa-solid fa-caret-down"></i>
+            <span class="menu-bar"><i class="fa-solid fa-caret-down"></i>
               <ul class="dropdown-menu">
                 <li class="asc"><i class="fa-solid fa-arrow-up"></i> Asc (A-Z)</li>
                 <li class="desc"> <i class="fa-solid fa-arrow-down"></i> Desc (Z-A)</li>
@@ -66,7 +66,7 @@
         <th id="approvalProcessNameHeader" data-column="approvalProcessName">
           <div class="tbl-hdr-inner-container">
             <span class="tbl-heading">Approval Process</span>
-            <span class="menu-bar" data-tt="tooltip_sort"><i class="fa-solid fa-caret-down"></i>
+            <span class="menu-bar"><i class="fa-solid fa-caret-down"></i>
               <ul class="dropdown-menu">
                 <li class="asc"><i class="fa-solid fa-arrow-up"></i> Asc (A-Z)</li>
                 <li class="desc"> <i class="fa-solid fa-arrow-down"></i> Desc (Z-A)</li>
@@ -75,16 +75,10 @@
             </span>
           </div>
         </th>
-        <th id="ownerNameHeader" data-column="ownerName">
-          <div class="tbl-hdr-inner-container">
-            <span class="tbl-heading">Owner Name</span>
-            <!-- Dropdown will be added here dynamically -->
-          </div>
-        </th>
         <th id="moduleIdHeader" data-column="moduleId">
           <div class="tbl-hdr-inner-container">
             <span class="tbl-heading">Module</span>
-            <span class="menu-bar" data-tt="tooltip_sort"><i class="fa-solid fa-caret-down"></i>
+            <span class="menu-bar"><i class="fa-solid fa-caret-down"></i>
               <ul class="dropdown-menu">
                 <li class="asc"><i class="fa-solid fa-arrow-up"></i> Asc (A-Z)</li>
                 <li class="desc"> <i class="fa-solid fa-arrow-down"></i> Desc (Z-A)</li>
@@ -96,7 +90,7 @@
         <th id="dateCreatedBy" class="created-date" data-column="dateCreated">
           <div class="tbl-hdr-inner-container">
             <span class="tbl-heading">Created Date</span>
-            <span class="menu-bar" data-tt="tooltip_sort"><i class="fa-solid fa-caret-down"></i>
+            <span class="menu-bar"><i class="fa-solid fa-caret-down"></i>
               <ul class="dropdown-menu">
                 <li class="asc"><i class="fa-solid fa-arrow-up"></i> Asc</li>
                 <li class="desc"> <i class="fa-solid fa-arrow-down"></i> Desc</li>
@@ -108,7 +102,7 @@
         <th id="dateCreatedBy" class="no-of-days" data-column="noOfDays">
           <div class="tbl-hdr-inner-container">
             <span class="tbl-heading">No. of days</span>
-            <span class="menu-bar" data-tt="tooltip_sort"> <i class="fa-solid fa-caret-down"></i>
+            <span class="menu-bar"><i class="fa-solid fa-caret-down"></i>
               <ul class="dropdown-menu">
                 <li class="asc"><i class="fa-solid fa-arrow-up"></i> Asc </li>
                 <li class="desc"> <i class="fa-solid fa-arrow-down"></i> Desc</li>
@@ -149,8 +143,8 @@
                   <option value="true">Approved</option>
                   <option value="both">Both</option>
                 </select> -->
-          <button type="button" id="cta_filter" data-tt="tooltip_search_btn">Search</button>
-          <button type="button" id="cta_clear_filter" data-tt="tooltip_clear_btn">clear</button>
+          <button type="button" id="cta_filter">Search</button>
+          <button type="button" id="cta_clear_filter">clear</button>
         </th>
 
       </tr>
@@ -205,7 +199,7 @@
         </select>
         <div id="otherReasonContainer" style="display: none;">
           <label for="otherReason">Please Specify:</label>
-          <textarea id="otherReason" placeholder="Please specify the reason" rows="3"></textarea>
+          <input type="text" id="otherReason" placeholder="Please specify the reason">
         </div>
       </div>
 
@@ -232,21 +226,18 @@
   </div>
   <div class="footer">
     <div class="buttons">
-      <button data-tt="tooltip_bulk_reject" id="bulkReject" class="reject"
-        onclick="ZAGlobal.buttonAction('reject');">Bulk Reject</button>
-      <button data-tt="tooltip_bulk_approve" id="bulkApprove" class="approve"
-        onclick="ZAGlobal.buttonAction('approve');">Bulk Approve</button>
-      <button data-tt="tooltip_bulk_delegate" id="bulkDelegate" class="delegate"
-        onclick="ZAGlobal.buttonAction('delegate');">Bulk Delegate</button>
+       <button data-tt="tooltip_bulk_reject" id="bulkReject" class="reject" onclick="ZAGlobal.buttonAction('reject');">Bulk Reject</button>
+      <button data-tt="tooltip_bulk_approve" id="bulkApprove" class="approve" onclick="ZAGlobal.buttonAction('approve');">Bulk Approve</button>
+      <button data-tt="tooltip_bulk_delegate" id="bulkDelegate" class="delegate" onclick="ZAGlobal.buttonAction('delegate');">Bulk Delegate</button>
     </div>
     <div id="paginationFooter" class="pagination-footer"></div>
   </div>
   <div id="bulkLoader" class="loader-overlay">
-    <div>
-      <div class="loader-spinner"></div>
-      <div class="processingText"></div>
-    </div>
+  <div>
+    <div class="loader-spinner"></div>
+    <div class="processingText"></div>
   </div>
+</div>
 </body>
 
 </html>
