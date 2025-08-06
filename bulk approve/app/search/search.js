@@ -9,8 +9,8 @@ async function filterRecords() {
     let clearBtn = document.getElementById('cta_clear_filter');
 
 
-    searchInput.placeholder = t["record-name-filter-input"];
-    searchBtn.title = t["search_tooltip"] || "Enter text to search";
+    // searchInput.placeholder = t["record-name-filter-input"];
+    // searchBtn.title = t["tooltip_search_btn"] || "Enter text to search";
 
     searchBtn.disabled = true;
     searchBtn.style.opacity = "0.5";
@@ -81,6 +81,10 @@ async function filterRecords() {
             searchBtn.disabled = true;
             searchBtn.style.opacity = "0.5";
             searchBtn.style.cursor = "not-allowed";
+            document.getElementById('record-name-filter-input').value = '';
+            
+             $('#module').val('All_Modules').trigger('change');
+            document.getElementById('selected-module-display').style.display = 'none';
             ZAGlobal.filteredRecords = ZAGlobal.allRecords;
             ZAGlobal.reRenderTableBody();
         } else {

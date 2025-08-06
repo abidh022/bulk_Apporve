@@ -1,6 +1,22 @@
+// function tt(key) {
+//     const fullKey = `custom.APPROVAL.${key}`;
+//     const value = t[fullKey];
+//     if (!value) {
+//         console.warn(`Missing translation: ${fullKey}`);
+//         return `⚠️${key}`; 
+//     }
+//     return value;
+// }
+
+// function tt(key) {
+//     return t[`custom.APPROVAL.${key}`] || `custom.APPROVAL.${key}`;
+// }
+
 function tt(key) {
-    return t[`custom.APPROVAL.${key}`] || `custom.APPROVAL.${key}`;
+    if (!t) return key;
+    return t[`custom.APPROVAL.${key}`] || t[key] || key;
 }
+
 
 function applyTranslations() {
     if (!t) return;
@@ -10,6 +26,10 @@ function applyTranslations() {
     document.querySelector('.approve').innerText = tt("approve");
     document.querySelector('.reject').innerText = tt("reject");
     document.getElementById('cancelPopupBtn').innerText = tt("cancel");
+    document.getElementById('bulkApprove').innerText = tt("bulkApprove");
+    document.getElementById('bulkReject').innerText = tt("bulkReject");
+    document.getElementById('bulkDelegate').innerText = tt("bulkDelegate");
+    // document.getElementById('approve_single_action_btn').innerText = tt("approve_single_action_btn");
 
     // Labels and Placeholders
     document.querySelector('label[for="comment"]').innerText = tt("commentLabel");
@@ -23,18 +43,19 @@ function applyTranslations() {
     document.querySelector('label[for="rejectionReason"]').innerText = tt("rejectionReasonLabel");
     document.getElementById('popupTitle').innerText = tt("popupTitle");
 
-    const filterInput = document.getElementById('record-name-filter-input');
-    if (filterInput) {
-        filterInput.placeholder = tt("record-name-filter-input");
-    }
+    document.getElementById('record-name-filter-input').placeholder = tt("record-name-filter-input");
+
 
     // Table Headers
     document.querySelector('#recordNameHeader .tbl-heading').innerText = tt("recordName");
     document.querySelector('#approvalProcessNameHeader .tbl-heading').innerText = tt("approvalProcess");
+    document.querySelector('#ownerNameHeader .tbl-heading').innerText = tt("ownerName");
     document.querySelector('#moduleIdHeader .tbl-heading').innerText = tt("module");
     document.querySelector('#dateCreatedBy .tbl-heading').innerText = tt("createdDate");
     document.querySelector('.no-of-days .tbl-heading').innerText = tt("noOfDays");
     document.querySelector('#action').innerText = tt("action");
+    document.querySelector('.processingText').innerText = tt("processingText");
+
 
     // Sort Dropdowns
     document.querySelectorAll('.dropdown-menu').forEach(menu => {
@@ -66,26 +87,26 @@ function applyTranslations() {
     }
 
     // Modules List (Modules come from Zoho API, use module name directly)
-        const moduleSelect = document.getElementById('module');
-        const modulesList = document.getElementById('modules-list');
+    const moduleSelect = document.getElementById('module');
+    const modulesList = document.getElementById('modules-list');
 
-        [moduleSelect, modulesList].forEach(select => {
+    [moduleSelect, modulesList].forEach(select => {
         if (!select) return;
 
         const tryTranslate = () => {
             if (select.options.length === 0) {
-            return setTimeout(tryTranslate, 50);
+                return setTimeout(tryTranslate, 50);
             }
 
             Array.from(select.options).forEach(opt => {
-            const raw = (opt.value || opt.textContent.trim()).replace(/\s+/g, "_"); // normalize
-            const key = `custom.APPROVAL.module.${raw}`;
-            const tr = t[key];
+                const raw = (opt.value || opt.textContent.trim()).replace(/\    s+/g, "_"); // normalize
+                const key = `custom.APPROVAL.module.${raw}`;
+                const tr = t[key];
             });
         };
 
         tryTranslate();
-        });
+    });
 
     // Rejection Reasons
     const rejectionReasonSelect = document.getElementById('rejectionReason');
@@ -99,6 +120,34 @@ function applyTranslations() {
             }
         });
     }
+
+    document.querySelectorAll('[data-tt]').forEach(el => {
+        const key = el.getAttribute('data-tt');
+        const translated = t[`custom.APPROVAL.${key}`];
+        if (translated) {
+            el.setAttribute('data-tooltip', translated);
+        }
+    });
+
+
+    // Total Records Count
+    const totalRecordsCountEl = document.getElementById('totalRecordsCount');
+    if (totalRecordsCountEl) {
+        totalRecordsCountEl.innerText = tt("totalRecordsCount");
+    } else {
+        console.warn("Element with ID 'totalRecordsCount' not found.");
+    }
+
+    // Translate dynamic action buttons
+    document.querySelectorAll('.approve-btn .btn-label').forEach(el => {
+        el.innerText = tt("approve");
+    });
+    document.querySelectorAll('.delegate-btn .btn-label').forEach(el => {
+        el.innerText = tt("delegate");
+    });
+    document.querySelectorAll('.reject-btn .btn-label').forEach(el => {
+        el.innerText = tt("reject");
+    });
 }
 
 
@@ -114,7 +163,7 @@ function validateTranslations(translations, fallback) {
 
 
 function loadTranslation(langCode) {
-    console.log(langCode);
+    // console.log(langCode);
 
     return fetch(`translations/${langCode}.json`)
         .then(response => {
@@ -130,12 +179,12 @@ function loadTranslation(langCode) {
                     .then(enRes => enRes.json())
                     .then(enTranslations => {
                         t = validateTranslations(translations, enTranslations);
-                        console.log(`Translations loaded for: ${langCode}`);
+                        // console.log(`Translations loaded for: ${langCode}`);
                         applyTranslations();
                     });
             } else {
                 t = translations;
-                console.log(`Translations loaded for: ${langCode}`);
+                // console.log(`Translations loaded for: ${langCode}`);
                 applyTranslations();
             }
         })
@@ -147,47 +196,63 @@ function loadTranslation(langCode) {
         });
 }
 
-ZOHO.embeddedApp.init().then(() => {
-    ZOHO.CRM.CONFIG.getCurrentUser().then(data => {
-        let userLocale = data.users[0].locale || 'en';
+async function setDomainInfo() {
+    try {
+        const envData = await ZOHO.CRM.CONFIG.GetCurrentEnvironment();
+        const deployment = (envData.deployment || '').toLowerCase();
+        ZAGlobal.orgDomain = envData.zgid;
 
-        let langCode = userLocale;
+        switch (deployment) {
+            case 'china':
+                ZAGlobal.domainName = 'com.cn';
+                break;
+            case 'in':
+                ZAGlobal.domainName = 'in';
+                break;
+            case 'us':
+                ZAGlobal.domainName = 'com';
+                break;
+            default:
+                ZAGlobal.domainName = 'com';
+        }
+    } catch (error) {
+        console.error('Error fetching deployment or org info:', error);
+        ZAGlobal.domainName = 'com';
+    }
+}
 
-        console.log(langCode);
-        // Normalize Chinese variants
-           if (langCode.startsWith('zh')) {
-            langCode = 'zh';
-        } else if (langCode.startsWith('en')) {
-            langCode = 'en';}
-        // Add more if you have additional translations
+async function initZohoApp() {
+    try {
+        await ZOHO.embeddedApp.init();
+        // await setDomainInfo(); 
 
-        console.log("Normalized langCode:", langCode);
+        const user = await ZOHO.CRM.CONFIG.getCurrentUser();
+        let currentUser = user.users[0];
+
+        const userProfile = currentUser.profile.name.toLowerCase();
+        const userRole = currentUser.role.name.toLowerCase();
+
+        // console.log(`User Profile: ${userProfile}, Role: ${userRole}`);
+
+        ZAGlobal.isAdminOrCEO = (userProfile === 'administrator' || userRole === 'ceo');
+
+        let userLocale = currentUser.locale || 'en';
+        let langCode = userLocale.startsWith('zh') ? 'zh' : 'en';
+
         ZAGlobal.userLang = langCode;
 
-        // Load translations first, then fetch modules & populate
-        loadTranslation(langCode).then(() => {
-            return ZOHO.CRM.META.getModules();
-        }).then(data => {
-            if (data && Array.isArray(data.modules)) {
-                populateModules(data.modules);
-            }
-        }).catch(error => {
-            console.error('Error fetching modules:', error);
-        });
+        await loadTranslation(langCode);
+        setupOwnerDropdownHeader();// owner header
 
-    }).catch(error => {
-        console.error('Error fetching current user:', error);
-        // fallback: load English, then fetch modules & populate
-        loadTranslation('en').then(() => {
-            return ZOHO.CRM.META.getModules();
-        }).then(data => {
-            if (data && Array.isArray(data.modules)) {
-                populateModules(data.modules);
-            }
-        }).catch(error => {
-            console.error('Error fetching modules:', error);
-        });
-    });
-}).catch(error => {
-    console.error('Error initializing Zoho SDK:', error);
-});
+        const modulesData = await ZOHO.CRM.META.getModules();
+        if (modulesData && Array.isArray(modulesData.modules)) {
+            populateModules(modulesData.modules);
+        }
+
+    } catch (error) {
+        console.error('Error initializing Zoho app:', error);
+        // Fallback to English if initialization fails
+        await loadTranslation('en');
+    }
+}
+initZohoApp();

@@ -22,31 +22,29 @@
   <script src="script.js" defer></script>
   <script src="translations/translation.js" defer></script>
   <script src="ButtonAction/BtnAction.js" defer></script>
-  <script src="Filter/filter.js" defer></script>
   <script src="getUsers/getUserDetails.js" defer></script>
   <script src="sort/sorting.js" defer></script>
   <script src="search/search.js" defer></script>
-  <script src="toast/toast.js" defer></script>  
+  <script src="toast/toast.js" defer></script>
   <script src="selectAll/selectAll.js" defer></script>
-
 </head>
 
 <body>
   <h3 id="title">Bulk Record Approval</h3>
   <div class="top">
     <div id="_till_SelectedRecordsCount">
-    <!-- <input type="text" id="searchBar" placeholder="Search"> -->
-    <span class="filter-icon"><i class="fa-solid fa-filter icon" id="filter-icon"></i></span>
-    <div id="moduleContainer">
-      <select id="module" class="selectbox">
-      </select>
-      <div id="selected-module-display" class="selected-modules" style="display: none;"></div>
+      <!-- <input type="text" id="searchBar" placeholder="Search"> -->
+      <span class="filter-icon"><i class="fa-solid fa-filter icon" id="filter-icon"></i></span>
+      <div id="moduleContainer">
+        <select id="module" class="selectbox">
+        </select>
+        <div id="selected-module-display" class="selected-modules" style="display: none;"></div>
+      </div>
+      <div id="selectedRecordsCount"></div>
     </div>
-    <div id="selectedRecordsCount"></div>
-  </div>
-  <div id="_till_TotalRecordsCount">
-    <div id="totalRecordsCount">Total Records </div>
-  </div>
+    <div id="_till_TotalRecordsCount">
+      <div id="totalRecordsCount">Total Records </div>
+    </div>
   </div>
 
   <table>
@@ -104,7 +102,7 @@
         <th id="dateCreatedBy" class="no-of-days" data-column="noOfDays">
           <div class="tbl-hdr-inner-container">
             <span class="tbl-heading">No. of days</span>
-            <span class="menu-bar"><i class="fa-solid fa-caret-down"></i> 
+            <span class="menu-bar"><i class="fa-solid fa-caret-down"></i>
               <ul class="dropdown-menu">
                 <li class="asc"><i class="fa-solid fa-arrow-up"></i> Asc </li>
                 <li class="desc"> <i class="fa-solid fa-arrow-down"></i> Desc</li>
@@ -121,10 +119,10 @@
       <tr class="filter-div hidden">
         <th></th>
         <th class="th filter"><select name="record-name-filter" id="record-name-filter">
-            <option value="equals">${t.filter_equals}</option>
-            <option value="not_equals">${t.filter_not_equals}</option>
-            <option value="starts_with">${t.filter_starts_with}</option>
-            <option value="is">${t.filter_is}</option>
+            <option value="equals">contains</option>
+            <option value="not_equals">doesn't contains</option>
+            <option value="starts_with">starts with</option>
+            <option value="is">is</option>
           </select><br>
           <input type="text" id="record-name-filter-input">
         </th>
@@ -148,12 +146,35 @@
           <button type="button" id="cta_filter">Search</button>
           <button type="button" id="cta_clear_filter">clear</button>
         </th>
-        <th></th>
+
       </tr>
     </thead>
     <tbody class="_tbody">
     </tbody>
   </table>
+  <!-- </thead>
+    <tbody class="_tbody">
+    </tbody>
+  </table> -->
+
+  <!-- <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="selectAllCheckbox" /></th>
+          <th id="recordNameHeader">Record Name</th>
+          <th id="approvalProcessNameHeader">Approval Process Name</th>
+          <th id="moduleIdHeader">Module</th>
+          <th id="criteriaHeader">Criteria</th>
+          <th id="dateCreatedBy">Date Created</th>
+          <th id="dateCreatedBy">No of days Waiting</th>
+          <th id="action">Action</th>
+          <th id="statusHeader">Status</th>
+        </tr>
+      </thead>
+      <tbody class="_tbody">
+      </tbody>
+    </table> -->
+
   <div id="approvalRejectPopup" class="popup">
     <div class="popup_content">
       <!-- <span id="closePopup" class="clos  e">&times;</span> -->
@@ -186,30 +207,37 @@
       <div id="delegateSection" style="display:none;">
         <label for="userSelect">Users</label>
         <select id="userSelect">
-          <!-- Populate this list dynamically with users -->
         </select>
       </div>
 
-      <!-- Comment box (for both Approve and Reject) -->
+      <!-- Comment box (for Approve/ Reject/ delegate) -->
       <div id="commentSection">
         <label for="comment">Comment</label>
-        <textarea id="comment" placeholder="Add your comments here (Optional)"></textarea>
+        <textarea id="comment" placeholder="Add your comments here (Optional)" maxlength="500"></textarea>
       </div>
 
       <div class="buttons">
         <button id="cancelPopupBtn">Cancel</button>
         <button id="submitActionBtn">Submit</button>
       </div>
+
     </div>
   </div>
   </div>
   <div class="footer">
     <div class="buttons">
-      <button class="reject" id="bulkReject" onclick="ZAGlobal.buttonAction('reject');">Bulk Reject</button>
-      <button class="approve" id="bulkApprove" onclick="ZAGlobal.buttonAction('approve');">Bulk Approve</button>
+       <button data-tt="tooltip_bulk_reject" id="bulkReject" class="reject" onclick="ZAGlobal.buttonAction('reject');">Bulk Reject</button>
+      <button data-tt="tooltip_bulk_approve" id="bulkApprove" class="approve" onclick="ZAGlobal.buttonAction('approve');">Bulk Approve</button>
+      <button data-tt="tooltip_bulk_delegate" id="bulkDelegate" class="delegate" onclick="ZAGlobal.buttonAction('delegate');">Bulk Delegate</button>
     </div>
     <div id="paginationFooter" class="pagination-footer"></div>
   </div>
+  <div id="bulkLoader" class="loader-overlay">
+  <div>
+    <div class="loader-spinner"></div>
+    <div class="processingText"></div>
+  </div>
+</div>
 </body>
 
 </html>

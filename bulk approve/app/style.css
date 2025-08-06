@@ -1,5 +1,6 @@
 body {
   font-family: Arial, sans-serif;
+  background-color: #ffffff;
   /* margin: 20px; */
 }
 
@@ -11,8 +12,14 @@ table {
   user-select: none;
   color: #313131;
   font-family: sans-serif;
-  font-size: 14px  
+  font-size: 14px  ;
+   min-width: 600px;
 }
+
+  /* #action{
+    text-align: center;
+    justify-content: center;
+  } */
 
 th,
 td {
@@ -154,8 +161,8 @@ th.active-sorted-column {
   z-index: 9999;
   margin-left: -8PX;
   border-top: 1px solid gray;
-  margin-bottom: 2px;
-  padding-top: 5px;
+  /* margin-bottom: 2px; */
+  /* padding-top: 5px; */
   
 
 }
@@ -177,6 +184,7 @@ th.active-sorted-column {
   max-width: 125px;
   padding: 8px;
 }
+
 @media (max-width: 768px) {
   .buttons button {
     font-size: 12px;
@@ -196,6 +204,11 @@ th.active-sorted-column {
   color: white;
 }
 
+.buttons .delegate {
+  background-color: #2088e9;
+  color: white;
+}
+
 .buttons button:hover {
   opacity: 0.9;
 }
@@ -203,7 +216,7 @@ th.active-sorted-column {
 
 input[type="checkbox"] {
   cursor: pointer;
-  background-color: yellow;
+  accent-color: #138cfc;
 }
 
 ._status {
@@ -223,7 +236,6 @@ input[type="checkbox"] {
 
 .top {
   display: flex;
-  /* gap: 15px;   */
   width: 100%;
   justify-content:flex-start;
   margin-bottom: 5px;
@@ -237,12 +249,13 @@ input[type="checkbox"] {
 }
 
 #_till_TotalRecordsCount{
-  /* width: 100%; */
-  margin-left: auto;
-  margin-right: 10px;
+  width: 100%;
+  margin-left: -20px;
+  /* margin-right: 10px; */
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  position: relative;
 }
 
 #selectedRecordsCount{
@@ -275,6 +288,7 @@ input[type="checkbox"] {
   font-variant: no-contextual;
   font-optical-sizing: auto;
   font-style: normal;
+  position: sticky;
 }
 
 #cancelPopupBtn {
@@ -330,6 +344,7 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  margin-right: 10px;
   width: auto;
   /* box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); */
   /* margin-top: 20px;  */
@@ -546,6 +561,8 @@ input[type="checkbox"] {
   border-radius: 4px;
   resize: vertical;
   box-sizing: border-box;
+  white-space: pre-wrap; 
+  word-break: break-word;
 }
 
 #commentSection textarea:focus {
@@ -558,6 +575,32 @@ input[type="checkbox"] {
   color: #888;
   font-family: sans-serif;
 }
+
+#otherReason {
+  width: 100%;
+  height: 90px;
+  padding: 10px;
+  font-size: 1rem;
+  font-family: sans-serif;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+  box-sizing: border-box;
+  white-space: pre-wrap; 
+  word-break: break-word;
+}
+
+#otherReason:focus {
+  outline: none;
+  border-color: #6d94cd;
+  box-shadow: 0 0 10px rgba(35, 180, 237, 0.6);
+}
+
+#otherReason::placeholder {
+  color: #888;
+  font-family: sans-serif;
+}
+
 
 /* Delegate Section Styles */
 #delegateSection {
@@ -847,6 +890,120 @@ button.delegate-btn:hover {
   
 }
 
+.loader-overlay {
+  display: none; 
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.7);
+  z-index: 9999;
+
+  justify-content: center;
+  align-items: center;
+}
+
+.loader-overlay.show {
+  display: flex; /* only show flex when needed */
+}
+
+
+.loader-spinner {
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid #3498db;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+  margin: auto;
+}
+
+.processingText {
+  font-size: 16px;
+  color: 
+  #7b7777;
+  margin-top: 10px;
+  text-align: center;
+  font-family: sans-serif;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Base wrapper */
+[data-tooltip] {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+/* Tooltip bubble */
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 110%; 
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 4px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  border-radius: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 9999;
+  max-width: 200px;
+}
+
+table, thead, tr, th {
+  overflow: visible !important;
+}
+
+/* Show tooltip on hover */
+[data-tooltip]:hover::after {
+  opacity: 1;
+}
+
+/* Tooltip above (default) */
+[data-tooltip].tooltip-top::after {
+  bottom: 125%;
+  top: auto;
+}
+
+/* Tooltip below */
+[data-tooltip].tooltip-bottom::after {
+  top: 125%;
+  bottom: auto;
+}
+
+/* Tooltip shifts if near left edge */
+[data-tooltip].align-left::after {
+  left: 0;
+  transform: translateX(0);
+}
+
+/* Tooltip shifts if near right edge */
+[data-tooltip].align-right::after {
+  right: 0;
+  left: auto;
+  transform: translateX(0);
+}
+
+button:first-child[data-tooltip]::after {
+  left: 0;
+  transform: translateX(0);
+}
+
+button:last-child[data-tooltip]::after {
+  right: 0;
+  left: auto;
+  transform: translateX(0);
+}
 
 /* Sorting Related Style Ends here */
 

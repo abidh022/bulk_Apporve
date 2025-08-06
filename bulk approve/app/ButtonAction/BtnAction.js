@@ -22,7 +22,9 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
     }
     document.getElementById('approvalRejectPopup').style.display = 'none';
     document.getElementById('approvalRejectPopup').style.display = 'flex';
-    // document.getElementById('popupTitle').textContent = action === 'approve' ? 'Approve Records' : action === 'reject' ? 'Reject Records' : 'Delegate Records';
+    // Add keydown listener
+    popupKeyHandler = handlePopupKeyEvents;
+    document.addEventListener('keydown', popupKeyHandler);
     document.getElementById('commentSection').style.display = action === 'reject' ? 'none' : 'block';
     document.getElementById('comment').value = '';
     document.getElementById('rejectionReason').value = 'selectReasonOption';
@@ -30,7 +32,6 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
     document.getElementById('otherReasonContainer').style.display = 'none';
     document.getElementById('popupTitle').textContent = tt(`${action}Title`);
     document.getElementById('submitActionBtn').textContent = tt(`${action}Btn`);
-    // console.log("Button label:", t[`${action}Btn`]);
 
     const submitBtn = document.getElementById('submitActionBtn');
 
@@ -76,101 +77,141 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
 
     // Handle the Cancel button to close the popup
     document.getElementById('cancelPopupBtn').addEventListener('click', () => {
+        closeApprovalPopup();
+        document.getElementById('otherReason').value = '';
         recordsToProcess = [];
     });
 
     // Handle the Submit button to approve or reject the records
     async function handleSubmitAction(records) {
+        const submitButton = document.getElementById('submitActionBtn');
         let comment = document.getElementById('comment').value.trim();
         let rejectionReason = '';
         let otherReason = '';
         let selectedUser = null;
 
-        if (action === 'reject') {
-            rejectionReason = $('#rejectionReason').val();
-            if (rejectionReason === 'selectReasonOption') {
-                ZAGlobal.triggerToast(tt("toast_select_rejection_reason"), 3000, 'warning');
-                return;
-            }
-            if (rejectionReason === 'Other') {
-                otherReason = $('#otherReason').val().trim();
-                if (!otherReason) {
-                    ZAGlobal.triggerToast(tt("toast_rejection_reason_required"), 3000, 'warning');
+        if (!navigator.onLine) {
+            ZAGlobal.triggerToast(tt("toast_network_error"), 3000, 'error');
+            return;
+        }
+
+        if (records.length > 199) {
+            ZAGlobal.triggerToast(tt("toast_max_200_limit"), 3000, 'warning');
+            return;
+        }
+
+        submitButton.disabled = true;
+        showLoader();
+
+        try {
+            if (action === 'reject') {
+                rejectionReason = $('#rejectionReason').val();
+                if (rejectionReason === 'selectReasonOption') {
+                    ZAGlobal.triggerToast(tt("toast_select_rejection_reason"), 3000, 'warning');
                     return;
                 }
-                comment = otherReason;
-            }
-        }
-
-        if (action === 'delegate') {
-            selectedUser = $('#userSelect').val();
-            if (!selectedUser) {
-                ZAGlobal.triggerToast(tt("toast_select_user_delegate"), 3000, 'warning');
-                return;
-            }
-            comment = $('#comment').val().trim();
-        }
-
-        let approvedRecordsCount = 0;
-        let rejectedRecordsCount = 0;
-        let delegatedRecordsCount = 0;
-
-        for (const record of records) {
-            const config = {
-                Entity: record.module,
-                RecordID: record.entity.id,
-                actionType: action,
-                comments: comment,
-                user: selectedUser || null
-            };
-
-            try {
-                const res = await ZOHO.CRM.API.approveRecord(config);
-
-                if (!res || res.code !== 'SUCCESS') {
-                    console.error(`Failed for record ${record.entity.id}`, res);
-                    continue; // Skip processing this record
+                if (rejectionReason === 'Other') {
+                    otherReason = $('#otherReason').val().trim();
+                    if (!otherReason) {
+                        ZAGlobal.triggerToast(tt("toast_rejection_reason_required"), 3000, 'warning');
+                        return;
+                    }
+                    comment = otherReason;
+                } else {
+                    comment = rejectionReason;
                 }
-
-                // Update count only on success
-                if (action === 'approve') approvedRecordsCount++;
-                else if (action === 'reject') rejectedRecordsCount++;
-                else if (action === 'delegate') delegatedRecordsCount++;
-
-                const updatedRecord = ZAGlobal.waitingRecords.find(r => r.entity.id === res.details.id);
-                if (updatedRecord) {
-                    updatedRecord.is_approved = action === 'approve';
-                    updatedRecord.is_rejected = action === 'reject';
-                    updatedRecord.is_delegated = action === 'delegate';
-
-                    // Remove from all relevant arrays
-                    ZAGlobal.processedRecords.push(updatedRecord);
-                    ZAGlobal.waitingRecords = ZAGlobal.waitingRecords.filter(r => r.entity.id !== res.details.id);
-                    ZAGlobal.filteredRecords = ZAGlobal.filteredRecords.filter(r => r.entity.id !== res.details.id);
-                    ZAGlobal.allRecords = ZAGlobal.allRecords.filter(r => r.entity.id !== res.details.id);
-                    ZAGlobal.selectedRecords = ZAGlobal.selectedRecords.filter(id => id !== res.details.id);
-                }
-
-            } catch (error) {
-                console.log("Error in API call:", error);
-                return;
             }
+
+            if (action === 'delegate') {
+                selectedUser = $('#userSelect').val();
+                if (!selectedUser) {
+                    ZAGlobal.triggerToast(tt("toast_select_user_delegate"), 3000, 'warning');
+                    return;
+                }
+                comment = $('#comment').val().trim();
+            }
+            submitButton.disabled = true;
+
+            let approvedRecordsCount = 0;
+            let rejectedRecordsCount = 0;
+            let delegatedRecordsCount = 0;
+
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            for (const record of records) {
+                const config = {
+                    Entity: record.module,
+                    RecordID: record.entity.id,
+                    actionType: action,
+                    comments: comment,
+                    user: selectedUser || null
+                };
+
+                try {
+                    const res = await ZOHO.CRM.API.approveRecord(config);
+                    await sleep(200);
+
+                    if (!res || res.code !== 'SUCCESS') {
+                        console.error(`Failed for record ${record.entity.id}`, res);
+
+                        // If same user is selected for delegation, show error
+                        if (res && res.message) {
+                            ZAGlobal.triggerToast(tt("toast_delegate_same_user"), 3000, 'error');
+                        }
+                        continue; // Skip processing this record
+                    }
+
+                    // Update count only on success
+                    if (action === 'approve') approvedRecordsCount++;
+                    else if (action === 'reject') rejectedRecordsCount++;
+                    else if (action === 'delegate') delegatedRecordsCount++;
+
+                    const updatedRecord = ZAGlobal.waitingRecords.find(r => r.entity.id === res.details.id);
+                    if (updatedRecord) {
+                        updatedRecord.is_approved = action === 'approve';
+                        updatedRecord.is_rejected = action === 'reject';
+                        updatedRecord.is_delegated = action === 'delegate';
+
+                        // Remove from all relevant arrays
+                        ZAGlobal.processedRecords.push(updatedRecord);
+                        ZAGlobal.waitingRecords = ZAGlobal.waitingRecords.filter(r => r.entity.id !== res.details.id);
+                        ZAGlobal.filteredRecords = ZAGlobal.filteredRecords.filter(r => r.entity.id !== res.details.id);
+                        ZAGlobal.allRecords = ZAGlobal.allRecords.filter(r => r.entity.id !== res.details.id);
+                        ZAGlobal.selectedRecords = ZAGlobal.selectedRecords.filter(id => id !== res.details.id);
+                    }
+
+                } catch (error) {
+                    console.log("Error in API call:", error);
+                    return;
+                }
+            }
+
+            let toastMessage = '';
+            if (action === 'approve') {
+                toastMessage = tt("toast_approval_success")
+                    .replace('{count}', approvedRecordsCount)
+                    .replace('{verb}', approvedRecordsCount === 1 ? 'was' : 'were');
+            } else if (action === 'reject') {
+                toastMessage = tt("toast_rejection_success")
+                    .replace('{count}', rejectedRecordsCount)
+                    .replace('{verb}', rejectedRecordsCount === 1 ? 'was' : 'were');
+            } else if (action === 'delegate') {
+                toastMessage = tt("toast_delegation_success")
+                    .replace('{count}', delegatedRecordsCount)
+                    .replace('{verb}', delegatedRecordsCount === 1 ? 'was' : 'were');
+            }
+
+            if (approvedRecordsCount || rejectedRecordsCount || delegatedRecordsCount) {
+                // document.getElementById('approvalRejectPopup').style.display = 'none';
+                closeApprovalPopup();
+                ZAGlobal.reRenderTableBody();
+                ZAGlobal.triggerToast(toastMessage, 3000, action === 'approve' ? 'success' : action === 'reject' ? 'error' : 'info');
+            }
+
         }
-
-        let toastMessage = '';
-        if (action === 'approve') {
-            toastMessage = `${approvedRecordsCount} record${approvedRecordsCount === 1 ? '' : 's'} ${approvedRecordsCount === 1 ? 'was' : 'were'} approved`;
-        } else if (action === 'reject') {
-            toastMessage = `${rejectedRecordsCount} record${rejectedRecordsCount === 1 ? '' : 's'} ${rejectedRecordsCount === 1 ? 'was' : 'were'} rejected`;
-        } else if (action === 'delegate') {
-            toastMessage = `${delegatedRecordsCount} record${delegatedRecordsCount === 1 ? '' : 's'} ${delegatedRecordsCount === 1 ? 'was' : 'were'} delegated`;
-        }
-
-
-        if (approvedRecordsCount || rejectedRecordsCount || delegatedRecordsCount) {
-            document.getElementById('approvalRejectPopup').style.display = 'none';
-            ZAGlobal.reRenderTableBody();
-            ZAGlobal.triggerToast(toastMessage, 3000, action === 'approve' ? 'success' : action === 'reject' ? 'error' : 'info');
+        finally {
+            submitButton.disabled = false;
+            hideLoader();
         }
     }
     await ZAGlobal.reRenderTableBody();
@@ -195,3 +236,33 @@ $(document).on('click', '.delegate-btn', function () {
 document.getElementById('cancelPopupBtn').addEventListener('click', () => {
     document.getElementById('approvalRejectPopup').style.display = 'none';
 });
+
+let popupKeyHandler;
+
+
+function handlePopupKeyEvents(event) {
+    const popup = document.getElementById('approvalRejectPopup');
+    if (!popup || popup.style.display === 'none') return;
+
+    const activeElement = document.activeElement;
+    const isTypingField = activeElement.tagName === 'TEXTAREA' ||
+        (activeElement.tagName === 'INPUT' && activeElement.type === 'text');
+
+    if (event.key === 'Enter' && !isTypingField) {
+        event.preventDefault();
+        const submitBtn = document.getElementById('submitActionBtn');
+        if (!submitBtn.disabled) {
+            submitBtn.click();
+        }
+    } else if (event.key === 'Escape') {
+        event.preventDefault();
+        closeApprovalPopup();
+    }
+}
+
+function closeApprovalPopup() {
+    document.getElementById('approvalRejectPopup').style.display = 'none';
+    document.getElementById('otherReason').value = '';
+    document.removeEventListener('keydown', popupKeyHandler);
+}
+
