@@ -11,12 +11,12 @@ var ZAGlobal = {
 
     reRenderTableBody: async function () {
         $('._tbody').empty();
-        var tbody = '';
+        var tbody= '';
 
         const headerCheckbox = document.querySelector('#selectAllCheckbox');
         if (headerCheckbox) headerCheckbox.disabled = false;
 
-                await setDomainInfo(); 
+        await setDomainInfo(); 
 
 
         const noRecords = !Array.isArray(ZAGlobal.allRecords) || ZAGlobal.allRecords.length === 0;
@@ -154,7 +154,7 @@ if (totalCountEl) {
     bindPaginationEvents: function () {
         $('#recordsPerPage').on('change', function () {
             ZAGlobal.recordsPerPage = parseInt(this.value);
-            ZAGlobal.currentPage = 1; ``
+            ZAGlobal.currentPage = 1;
             ZAGlobal.reRenderTableBody();
         });
 
@@ -241,6 +241,8 @@ ZOHO.embeddedApp.on("PageLoad", async function (data) {
         ZAGlobal.allRecords = [...combinedRecords];
         ZAGlobal.filteredRecords = [...combinedRecords];
         ZAGlobal.waitingRecords = [...awaitingRecords]; // Only current user's records (used for action buttons)
+        console.log("All Records:", ZAGlobal.allRecords);
+        
 
         await ZAGlobal.reRenderTableBody();
     } catch (error) {

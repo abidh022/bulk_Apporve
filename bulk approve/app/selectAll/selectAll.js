@@ -121,7 +121,7 @@ document.querySelector('#selectAllCheckbox').addEventListener('change', function
         }
     });
 
-    ZAGlobal.reRenderTableBody();
+    // ZAGlobal.reRenderTableBody();
     updateSelectAllCheckboxState();
     updateSelectedCount();
 });
@@ -162,20 +162,34 @@ function resetHeaderCheckbox() {
 
 function updateSelectedCount() {
     const count = ZAGlobal.selectedRecords.length;
+    const counterElement = document.getElementById('selectedCounter');
+    const clearBtn = document.getElementById('clearSelectedRecords');
 
-    let counterElement = document.getElementById('selectedCounter');
     if (!counterElement) {
-        counterElement = document.createElement('div');
-        counterElement.id = 'selectedCounter';
-        document.querySelector('#selectedRecordsCount')?.prepend(counterElement);
+        const newCounter = document.createElement('div');
+        newCounter.id = 'selectedCounter';
+        document.querySelector('#selectedRecordsCount')?.prepend(newCounter);
     }
+
+    const updatedCounter = document.getElementById('selectedCounter');
 
     if (count > 0) {
-
         let translatedText = t["custom.APPROVAL.selectedCounterText"].replace('${count}', count).replace('${plural}', count > 1 ? 's' : '');
-        counterElement.textContent = translatedText;
-        counterElement.style.display = 'block';
+        updatedCounter.textContent = translatedText;
+        updatedCounter.style.display = 'block';
+        if (clearBtn) clearBtn.style.display = 'inline-block';
     } else {
-        counterElement.style.display = 'none';
+        updatedCounter.style.display = 'none';
+        if (clearBtn) clearBtn.style.display = 'none';
     }
 }
+
+
+document.getElementById('clearSelectedRecords')?.addEventListener('click', () => {
+    ZAGlobal.selectedRecords = [];
+     document.querySelectorAll('tbody input[type="checkbox"]:not(:disabled)').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    resetHeaderCheckbox();
+    updateSelectedCount();
+});

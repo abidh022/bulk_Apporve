@@ -12,14 +12,8 @@ table {
   user-select: none;
   color: #313131;
   font-family: sans-serif;
-  font-size: 14px  ;
-   min-width: 600px;
+  font-size: 14px  
 }
-
-  /* #action{
-    text-align: center;
-    justify-content: center;
-  } */
 
 th,
 td {
@@ -242,7 +236,7 @@ input[type="checkbox"] {
 }
 
 #_till_SelectedRecordsCount{
-  width: 50%;
+  width: 100%;
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -259,7 +253,7 @@ input[type="checkbox"] {
 }
 
 #selectedRecordsCount{
-  font-size: 14px;
+  font-size: 15px;
   color: #333;
   margin-left: 20px;
   font-family: sans-serif;
@@ -278,6 +272,20 @@ input[type="checkbox"] {
   height: 18px;
 }
 
+#clearSelectedRecords{
+  background-color: transparent;
+  color: #333;
+  border: none;
+  text-decoration :underline dashed;
+  text-underline-offset: 2px;
+  /* border-radius: 5px; */
+  /* padding: 5px 10px; */
+  font-size: 13px;
+  color: rgb(115, 119, 123);
+  cursor: pointer;
+  margin-left: 15px;
+
+}
 
 #title,
 #popup_header {
@@ -1005,36 +1013,3 @@ button:last-child[data-tooltip]::after {
   transform: translateX(0);
 }
 
-/* Sorting Related Style Ends here */
-
-
-/* toast  */
-/* #toast-container > .toast {
-  transition: opacity 0.5s ease-out !important; 
-  opacity: 1 !important;
-}
-
-#toast-container > .toast.toast-fade {
-  opacity: 0 !important;
-}
-@keyframes fadeOutFast {
-  from {
-      opacity: 1;
-  }
-  to {
-      opacity: 0;
-  }
-}
-
-#toast-container > .toast {
-  animation: fadeOutFast 0.2s forwards !important;
-} */
-
-/* .selected-modules {
-  padding: 10px;
-  font-size: 1rem;
-  color: #333;
-  font-family: sans-serif;
-  margin-top: 10px;
-  display: none;
-} */

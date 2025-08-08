@@ -1,33 +1,41 @@
-// Display the active Modules  
 function populateModules(modules) {
     const select = document.getElementById('module');
-    select.innerHTML = '';
+    const modulesList = document.getElementById('modules-list');
+    const previousValue = select.value;
 
+    // Destroy existing select2 instance if it exists
+    if ($.fn.select2 && $('#module').hasClass('select2-hidden-accessible')) {
+        $('#module').select2('destroy');
+    }
+
+    // Clear current options
+    select.innerHTML = '';
+    modulesList.innerHTML = '';
+
+    // Add "All Modules" option
     const allModulesOption = document.createElement('option');
     allModulesOption.value = 'All_Modules';
     allModulesOption.textContent = t['custom.APPROVAL.module.All_Modules'] || 'All Modules';
-    allModulesOption.selected = true;
     select.appendChild(allModulesOption);
 
+    const availableModuleNames = new Set(ZAGlobal.allRecords.map(r => r.module));
+
     modules.forEach(module => {
-        if (module.creatable == true && module.visibility == 1) {
-            // module.visible == true  &&
+        const moduleName = module.api_name;
+
+        if (module.creatable === true && module.visibility === 1 && availableModuleNames.has(moduleName)) {
             const option = document.createElement('option');
-            option.value = module.api_name;
-
-            const rawLabel = module.api_name;
-            const translatedLabel = t[`custom.APPROVAL.module.${rawLabel}`] || module.actual_plural_label;
+            option.value = moduleName;
+            const translatedLabel = t[`custom.APPROVAL.module.${moduleName}`] || module.actual_plural_label;
             option.textContent = translatedLabel;
-
-            // const translatedLabel = t[module.actual_plural_label] || module.actual_plural_label;
-            // option.textContent = translatedLabel;
-            // option.textContent = module.actual_plural_label;
             select.appendChild(option);
-            const optionClone = option.cloneNode(true);   // Sakthi's Code
-            document.getElementById('modules-list').appendChild(optionClone);
+
+            const optionClone = option.cloneNode(true);
+            modulesList?.appendChild(optionClone);
         }
     });
 
+    // Initialize Select2 with search
     $('#module').select2({
         allowClear: true,
         width: '100%',
@@ -40,18 +48,24 @@ function populateModules(modules) {
         }
     });
 
-    $('#module').on('change', function () {
-        handleModuleSelection();
-    });
+    // Restore previous value or default
+    const validValues = Array.from(select.options).map(opt => opt.value);
+    const valueToSet = validValues.includes(previousValue) ? previousValue : 'All_Modules';
+    $('#module').val(valueToSet).trigger('change.select2');
+
+    // Avoid duplicate event handlers
+    $('#module').off('select2:select').on('select2:select', handleModuleSelection);
+
+    // Initial filtered data
     ZAGlobal.filteredRecords = [...ZAGlobal.allRecords];
 }
 
-// Function to handle when the module is selected
+// Handler to filter records on selection
 function handleModuleSelection() {
     const selectedModule = $('#module').val();
 
-    if (selectedModule === 'AllModules') {
-        ZAGlobal.filteredRecords = ZAGlobal.allRecords;
+    if (selectedModule === 'All_Modules') {
+        ZAGlobal.filteredRecords = [...ZAGlobal.allRecords];
     } else {
         ZAGlobal.filteredRecords = ZAGlobal.allRecords.filter(record => record.module === selectedModule);
     }
@@ -129,11 +143,13 @@ function startNetworkMonitor() {
 async function filterByOwner(userId) {
     try {
         showLoader(); 
-        await new Promise(resolve => setTimeout(resolve, 100)); // optional
+        await new Promise(resolve => setTimeout(resolve, 100)); 
         const filtered = ZAGlobal.allRecords.filter(record => 
             record.waiting_for?.id === userId
         );
 
+        console.log(filtered);
+        
         ZAGlobal.filteredRecords = filtered;
         ZAGlobal.waitingRecords = filtered;
 
@@ -172,7 +188,7 @@ async function setupOwnerDropdownHeader() {
 function injectOwnerDropdown(users) {
     const ownerHeader = $('#ownerNameHeader .tbl-hdr-inner-container');
 
-    ownerHeader.find('.menu-bar').remove(); // Clean up any existing dropdown
+    ownerHeader.find('.menu-bar').remove(); 
 
     if (ZAGlobal.isAdminOrCEO) {
         // Admin/CEO – show user list dropdown
@@ -197,16 +213,18 @@ function injectOwnerDropdown(users) {
             )
         );
         ownerHeader.append(dropdown);
-    } else {
-        // Not admin – show toast on click
-        const toastTrigger = $('<span>', { class: 'menu-bar', 'data-tt': 'tooltip_users' }).append(
-            $('<i>', { class: 'fa-solid fa-caret-down' }).css('cursor', 'pointer')
-        );
+    } 
+    //for non-admin users, we can show a message or disable the dropdown
+    // else {
+    //     // Not admin – show toast on click
+    //     const toastTrigger = $('<span>', { class: 'menu-bar', 'data-tt': 'tooltip_users' }).append(
+    //         $('<i>', { class: 'fa-solid fa-caret-down' }).css('cursor', 'pointer')
+    //     );
 
-        toastTrigger.on('click', () => {
-            ZAGlobal.triggerToast("This is accessible only for admin.", 3000, 'warning');
-        });
+    //     toastTrigger.on('click', () => {
+    //         ZAGlobal.triggerToast("This is accessible only for admin.", 3000, 'warning');
+    //     });
 
-        ownerHeader.append(toastTrigger);
-    }
+    //     ownerHeader.append(toastTrigger);
+    // }
 }
