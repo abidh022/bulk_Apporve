@@ -12,7 +12,7 @@ table {
   user-select: none;
   color: #313131;
   font-family: sans-serif;
-  font-size: 14px  
+  font-size: 14px
 }
 
 th,
@@ -21,16 +21,16 @@ td {
   text-align: left;
   padding: 9px;
   white-space: nowrap;
-  overflow: hidden; 
+  overflow: hidden;
   text-overflow: ellipsis;
   /* padding: 9px 18px; */
 }
 
 th {
   background-color: #f4f4f4;
-  white-space: nowrap;       
-  overflow: hidden;          
-  text-overflow: ellipsis;    
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 tr:hover {
@@ -153,23 +153,25 @@ th.active-sorted-column {
   bottom: 0;
   background-color: #fff;
   z-index: 9999;
-  margin-left: -8PX;
-  border-top: 1px solid gray;
+  border-top: 1px solid rgb(167, 165, 165);
+  /* margin-left: -8PX; */
+  left: 0;
+  padding: 10px 10px;
+  box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.3);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   /* margin-bottom: 2px; */
   /* padding-top: 5px; */
-  
-
 }
 
 .buttons {
   display: flex;
-  gap: 10px;
-  margin-left: 20px;
+  gap: 12px;
+  margin-left: 10px;
 }
 
 .buttons button {
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   height: auto;
@@ -177,6 +179,8 @@ th.active-sorted-column {
   padding-right: 10px;
   max-width: 125px;
   padding: 8px;
+   border: 1px solid #ccc;
+       transition: all 0.2s ease-in-out;
 }
 
 @media (max-width: 768px) {
@@ -231,18 +235,18 @@ input[type="checkbox"] {
 .top {
   display: flex;
   width: 100%;
-  justify-content:flex-start;
+  justify-content: flex-start;
   margin-bottom: 5px;
 }
 
-#_till_SelectedRecordsCount{
+#_till_SelectedRecordsCount {
   width: 100%;
   display: flex;
   justify-content: flex-start;
   align-items: center;
 }
 
-#_till_TotalRecordsCount{
+#_till_TotalRecordsCount {
   width: 100%;
   margin-left: -20px;
   /* margin-right: 10px; */
@@ -252,7 +256,7 @@ input[type="checkbox"] {
   position: relative;
 }
 
-#selectedRecordsCount{
+#selectedRecordsCount {
   font-size: 15px;
   color: #333;
   margin-left: 20px;
@@ -260,7 +264,7 @@ input[type="checkbox"] {
   display: hidden;
 }
 
-#totalRecordsCount{
+#totalRecordsCount {
   font-size: 14px;
   color: #434D5F;
   /* margin-top: 10px; */
@@ -272,11 +276,11 @@ input[type="checkbox"] {
   height: 18px;
 }
 
-#clearSelectedRecords{
+#clearSelectedRecords {
   background-color: transparent;
   color: #333;
   border: none;
-  text-decoration :underline dashed;
+  text-decoration: underline dashed;
   text-underline-offset: 2px;
   /* border-radius: 5px; */
   /* padding: 5px 10px; */
@@ -286,6 +290,22 @@ input[type="checkbox"] {
   margin-left: 15px;
 
 }
+
+.fade-out {
+    animation: fadeOut 0.4s forwards;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+}
+
 
 #title,
 #popup_header {
@@ -340,20 +360,40 @@ input[type="checkbox"] {
 
 .select2-selection__clear {
   display: none !important;
+  
+}
+
+.select2-container .select2-selection--single {
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.select2-container {
+        width: auto !important;
+}
+
+.select2-container.userSelect {
+    width: 100% !important;
+}
+.user-list .user-item.active {
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
 }
 
 /* Pagination footer at the end of content */
 .pagination-footer {
-  background-color: #fff;
-  color: #333;
-  font-size: 12px;
-  padding: 10px 0px;
-  border-radius: 10px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  margin-right: 10px;
-  width: auto;
+  gap: 10px;
+  background-color: transparent;
+  color: #444;
+  margin-right: 20px;
+  /* padding: 10px 10px; */
+  /* justify-content: flex-end; */
+  /* width: auto; */
   /* box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); */
   /* margin-top: 20px;  */
 }
@@ -361,23 +401,30 @@ input[type="checkbox"] {
 .pagination-footer select {
   background-color: #fff;
   color: #333;
-  border: 1px solid #ddd;
+  border: 1px solid #a09f9f;
   border-radius: 5px;
-  padding: 5px;
+  padding: 6px 10px;
   font-size: 13px;
-  cursor: pointer;
+  cursor: pointer; 
+      appearance: none;
   /* margin-left: 3px; */
+}
+
+#recordsLabel{
+  font-size: 14px;
+  color: #333;
 }
 
 .pagination-footer button {
   background-color: #fff;
-  color: #333;
+  color: #222121;
   border: none;
   border-radius: 5px;
-  padding: 5px 4px;
+  /* padding: 5px 4px; */
   font-size: 13px;
   cursor: pointer;
-  /* margin: 0 5px; */
+  padding: 6px 10px;
+  transition: all 0.2s ease-in-out;
 }
 
 .pagination-footer select:focus,
@@ -404,14 +451,15 @@ input[type="checkbox"] {
 /* Styling for the <> symbols */
 .pagination-footer button#prevPageBtn::before,
 .pagination-footer button#nextPageBtn::after {
-  font-size: 12px;
+  font-size: 16px;
   color: #007bff;
 }
 
 /* Style them when button is disabled */
 .pagination-footer button#prevPageBtn:disabled::before,
 .pagination-footer button#nextPageBtn:disabled::after {
-  color: #aaa; /* Gray color for disabled state */
+  color: #aaa;
+  /* Gray color for disabled state */
 }
 
 /* Adding the <> symbols */
@@ -473,10 +521,12 @@ input[type="checkbox"] {
   background-color: #4CAF50;
   color: white;
 }
+
 .reject-style {
   background-color: #F44336;
   color: white;
 }
+
 .delegate-style {
   background-color: #2196F3;
   color: white;
@@ -569,7 +619,7 @@ input[type="checkbox"] {
   border-radius: 4px;
   resize: vertical;
   box-sizing: border-box;
-  white-space: pre-wrap; 
+  white-space: pre-wrap;
   word-break: break-word;
 }
 
@@ -594,7 +644,7 @@ input[type="checkbox"] {
   border-radius: 4px;
   resize: vertical;
   box-sizing: border-box;
-  white-space: pre-wrap; 
+  white-space: pre-wrap;
   word-break: break-word;
 }
 
@@ -634,7 +684,7 @@ input[type="checkbox"] {
   border-radius: 4px;
   box-sizing: border-box;
   background-color: white;
-  
+
 }
 
 #delegateSection select:focus {
@@ -658,7 +708,7 @@ button.delegate-btn {
   border: none;
   cursor: pointer;
   font-size: 14px;
-  white-space: nowrap;       
+  white-space: nowrap;
   color: #3b3b3b;
   background-color: transparent;
   transition: background-color 0.1s ease, color 0.1s ease;
@@ -689,6 +739,7 @@ button.delegate-btn:hover {
   color: #007bff;
   text-decoration: underline;
 }
+
 .slash {
   color: #3b3b3b;
   margin: 0 4px;
@@ -716,7 +767,7 @@ button.delegate-btn:hover {
 #moduleContainer {
   width: auto;
   /* margin: 10px 0; */
-  height: 28px;
+  /* height: 28px; */
   transform: scaleX(1);
   transform-origin: left;
   transition: all 0.3s ease;
@@ -791,7 +842,7 @@ button.delegate-btn:hover {
   /* background-color: #ffffff; */
 }
 
-#userSelect{
+#userSelect {
   width: 20px;
 }
 
@@ -818,7 +869,7 @@ button.delegate-btn:hover {
 }
 
 
-#cta_filter{
+#cta_filter {
   width: max-content;
   padding: 5px 16px;
   cursor: pointer;
@@ -845,8 +896,7 @@ button.delegate-btn:hover {
 }
 
 
-#cta_filter:hover
-{
+#cta_filter:hover {
   border-color: #0056b3;
   background-color: #0056b3;
 }
@@ -882,24 +932,24 @@ button.delegate-btn:hover {
 }
 
 .dropdown-menu li:hover {
-  background-color: #E7F2FF; 
+  background-color: #E7F2FF;
   color: black;
 }
 
 .dropdown-menu li.selected {
-  background-color: #E7F2FF; 
-  color: black;  
+  background-color: #E7F2FF;
+  color: black;
   border-radius: 5px;
 }
 
-.img{
-  max-width: 150px; 
+.img {
+  max-width: 150px;
   margin-bottom: 10px;
-  
+
 }
 
 .loader-overlay {
-  display: none; 
+  display: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -907,38 +957,61 @@ button.delegate-btn:hover {
   height: 100vh;
   background: rgba(255, 255, 255, 0.7);
   z-index: 9999;
-
   justify-content: center;
   align-items: center;
 }
 
 .loader-overlay.show {
-  display: flex; /* only show flex when needed */
+  display: flex;
+  /* only show flex when needed */
 }
 
 
 .loader-spinner {
-  border: 8px solid #f3f3f3;
-  border-top: 8px solid #3498db;
+  /* border: 8px solid #f3f3f3; */
+  /* border-top: 4px solid #d84228; */
   border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: spin 1s linear infinite;
+  width: 50px;
+  height: 50px;
+  box-shadow: 0 3px 0 0 #de3037;
   margin: auto;
+  animation: dot-rotate 1s linear infinite;
+  /* transform-origin: 70px 73.1px; */
+
+}
+
+
+/* 🔁 Rotation animation */
+@keyframes dot-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(180deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .processingText {
   font-size: 16px;
-  color: 
-  #7b7777;
+  color: #5c5a5a;
   margin-top: 10px;
   text-align: center;
   font-family: sans-serif;
+  display: inline-block;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.slideUp {
+  animation: slideUp 0.8s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 /* Base wrapper */
@@ -952,7 +1025,7 @@ button.delegate-btn:hover {
 [data-tooltip]::after {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: 110%; 
+  bottom: 110%;
   left: 50%;
   transform: translateX(-50%);
   background: #333;
@@ -968,7 +1041,10 @@ button.delegate-btn:hover {
   max-width: 200px;
 }
 
-table, thead, tr, th {
+table,
+thead,
+tr,
+th {
   overflow: visible !important;
 }
 
@@ -1013,3 +1089,47 @@ button:last-child[data-tooltip]::after {
   transform: translateX(0);
 }
 
+/* User Dropdown Styles for search functionality */
+/* .dropdown-menu.user-dropdown {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 8px;
+    background: white;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 1000;
+    position: absolute;
+} */
+
+.user-search-input {
+    width: 100%;
+    padding: 6px 8px;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+    border: 1px solid #7b7b7b;
+    border-radius: 4px;
+    outline: none;
+}
+
+.user-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.user-item {
+    cursor: pointer;
+    padding: 6px 8px;
+    transition: background 0.2s;
+}
+
+.user-item:hover {
+    background-color: #f0f0f0;
+}
+
+.no-user {
+    color: #888;
+    padding: 6px 8px;
+}

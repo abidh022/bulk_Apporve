@@ -5,9 +5,14 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
     let recordsToProcess = [];
     if (recordId) {
         // Single record action
-        const record = ZAGlobal.waitingRecords.find(rec => rec.entity.id == recordId);
-        if (!record) {
+    const record = ZAGlobal.allRecords.find(rec => rec.entity.id == recordId);       
+    if (!record) {
             ZAGlobal.triggerToast(tt("toast_record_not_found"), 3000, 'warning');
+            return;
+        }
+
+         if (action === 'delegate' && record.waiting_for?.id !== ZAGlobal.currentUserId) {
+            ZAGlobal.triggerToast("You can only delegate your own records.", 3000, 'warning');
             return;
         }
         recordsToProcess.push(record);
@@ -19,7 +24,15 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
             return;
         }
         recordsToProcess = ZAGlobal.waitingRecords.filter(rec => ZAGlobal.selectedRecords.includes(rec.entity.id));
+          // ✅ Restrict bulk delegation to only own records
+        if (action === 'delegate') {
+            const notOwned = recordsToProcess.filter(rec => rec.waiting_for?.id !== ZAGlobal.currentUserId);
+            if (notOwned.length > 0) {
+                ZAGlobal.triggerToast(tt("toast_delegate_own_only_bulk"), 3000, 'warning');
+                return;
+            }
     }
+}
     document.getElementById('approvalRejectPopup').style.display = 'none';
     document.getElementById('approvalRejectPopup').style.display = 'flex';
     // Add keydown listener
@@ -95,7 +108,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
             return;
         }
 
-        if (records.length > 199) {
+        if (records.length > 200) {
             ZAGlobal.triggerToast(tt("toast_max_200_limit"), 3000, 'warning');
             return;
         }
@@ -154,9 +167,8 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
                     if (!res || res.code !== 'SUCCESS') {
                         console.error(`Failed for record ${record.entity.id}`, res);
 
-                        // If same user is selected for delegation, show error
                         if (res && res.message) {
-                            ZAGlobal.triggerToast(tt("toast_delegate_same_user"), 3000, 'error');
+                            ZAGlobal.triggerToast((res.message), 3000, 'error');
                         }
                         continue; // Skip processing this record
                     }

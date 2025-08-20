@@ -10,13 +10,14 @@ var ZAGlobal = {
     totalPages: 0,
 
     reRenderTableBody: async function () {
+        ZAGlobal.applyCurrentFilters?.();
         $('._tbody').empty();
-        var tbody= '';
+        var tbody = '';
 
         const headerCheckbox = document.querySelector('#selectAllCheckbox');
         if (headerCheckbox) headerCheckbox.disabled = false;
 
-        await setDomainInfo(); 
+        await setDomainInfo();
 
 
         const noRecords = !Array.isArray(ZAGlobal.allRecords) || ZAGlobal.allRecords.length === 0;
@@ -43,14 +44,7 @@ var ZAGlobal = {
             resetHeaderCheckbox();
             updateSelectedCount();
             updateSelectAllCheckboxState();
-
-            const totalCountEl = document.getElementById('totalRecordsCount');
-            if (totalCountEl) {
-                const label = t["custom.APPROVAL.totalRecordsCount"];
-                totalCountEl.innerHTML = `${label}: ${'0'}`;
-            }
-            // ZAGlobal.updatePagination();
-            // updateSelectedCount();
+            updateTotalRecordsCount(true);
             return;
         }
         else {
@@ -62,6 +56,10 @@ var ZAGlobal = {
             var startIndex = (ZAGlobal.currentPage - 1) * ZAGlobal.recordsPerPage;
             var endIndex = startIndex + ZAGlobal.recordsPerPage;
             var recordsToShow = ZAGlobal.filteredRecords.slice(startIndex, endIndex);
+
+            const modulesData = await ZOHO.CRM.META.getModules();
+
+
 
             recordsToShow.forEach(function (record) {
 
@@ -79,14 +77,19 @@ var ZAGlobal = {
                     hour12: true
                 };
                 let safeLocale = ['en', 'zh'].includes(ZAGlobal.userLang) ? ZAGlobal.userLang : 'en';
-                var formattedDate = initiatedTime.toLocaleString( safeLocale, options);
+                var formattedDate = initiatedTime.toLocaleString(safeLocale, options);
+
+
+                // const module_name_replace = modulesData.modules.find(item => item.api_name == record.module);
+                // console.log(module_name_replace);
+
 
                 tbody += `<tr data-id="${record.entity.id}" data-module="${record.module}">
                             <td><input type="checkbox" data-id="${record.entity.id}" data-module="${record.module}" ${ZAGlobal.selectedRecords.includes(record.entity.id) ? 'checked' : ''}></td>
                             <td><a href= "https://crm.zoho.${ZAGlobal.domainName}/crm/org${ZAGlobal.orgDomain}/tab/${record.module}/${record.entity.id}" target="_blank" class="record-link">${record.entity.name}</a></td>
                             <td>${record.rule.name}</td>
                             <td>${record.waiting_for.name}</td>
-                            <td>${t[`custom.APPROVAL.module.${record.module}`] || record.module}</td>
+                            <td>${t[`custom.APPROVAL.module.${record.module}`] || (modulesData.modules.find(item => item.api_name == record.module)).plural_label}</td>
                             <td>${formattedDate}</td>
                             <td>${daysAgo} ${daysAgo === 1 ? tt("dayAgo") : tt("daysAgo")}</td>
                             <td class="action-buttons">
@@ -98,6 +101,8 @@ var ZAGlobal = {
                             </td>
                             </tr>`;
                 // console.log(record);
+                // console.log(record.module);
+
             });
             $('._tbody').append(tbody);
         }
@@ -106,20 +111,7 @@ var ZAGlobal = {
         updateSelectedCount();
         updateSelectAllCheckboxState();
 
-        // ✅ Updated logic to always show total or 0
-        // const totalCountEl = document.getElementById('totalRecordsCount');
-        // if (totalCountEl) {
-        //     const total = Array.isArray(ZAGlobal.filteredRecords) ? ZAGlobal.filteredRecords.length : 0;
-        //     const label = t["custom.APPROVAL.totalRecords"] || 'Total Records';
-        //     totalCountEl.innerHTML = `${label}: ${total === 0 ? ('0') : `<strong>${total}</strong>`}`;
-        // }
-
-        const totalCountEl = document.getElementById('totalRecordsCount');
-if (totalCountEl) {
-    const total = Array.isArray(ZAGlobal.filteredRecords) ? ZAGlobal.filteredRecords.length : 0;
-    const label = tt("totalRecordsCount");
-    totalCountEl.innerHTML = `${label}: ${total === 0 ? ('0') : `<strong>${total}</strong>`}`;
-}
+        updateTotalRecordsCount();
 
         document.querySelectorAll('.approve-btn .btn-label').forEach(el => el.innerText = t["custom.APPROVAL.approve"]);
         document.querySelectorAll('.delegate-btn .btn-label').forEach(el => el.innerText = t["custom.APPROVAL.delegate"]);
@@ -144,7 +136,7 @@ if (totalCountEl) {
                 <option value="100" ${ZAGlobal.recordsPerPage === 100 ? 'selected' : ''}>100 </option>
             </select>
             <button id="prevPageBtn" ${ZAGlobal.currentPage === 1 ? 'disabled' : ''}></button>
-            <span>${ZAGlobal.currentPage} - ${ZAGlobal.totalPages}</span>
+            <span>${ZAGlobal.currentPage}&nbsp; of &nbsp;${ZAGlobal.totalPages}</span>
             <button id="nextPageBtn" ${ZAGlobal.currentPage === ZAGlobal.totalPages ? 'disabled' : ''}> </button>
         `;
         $('#paginationFooter').html(paginationHtml);
@@ -173,15 +165,37 @@ if (totalCountEl) {
         });
     }
 };
+function updateTotalRecordsCount() {
+    const totalCountEl = document.getElementById('totalRecordsCount');
+    if (!totalCountEl) return;
+
+    const label = t["custom.APPROVAL.totalRecordsCount"] || "Total Records";
+    const total = ZAGlobal.filteredRecords.length;
+    console.log(total);
+
+    totalCountEl.innerHTML = `${label}: ${total === 0 ? '0' : `<strong>${total}</strong>`}`;
+}
+
+ZAGlobal.applyCurrentFilters = function () {
+    const selectedModule = $('#module').val();
+    const selectedUserId = ZAGlobal.selectedUserId;
+    const isSelfAndSubordinates = ZAGlobal.isSelfAndSubordinates;
+
+    ZAGlobal.filteredRecords = ZAGlobal.allRecords.filter(record => {
+        const matchesUser = isSelfAndSubordinates || (selectedUserId && record.waiting_for?.id === selectedUserId);
+        const matchesModule = (!selectedModule || selectedModule === 'All_Modules') || (record.module === selectedModule);
+        return matchesUser && matchesModule;
+    });
+};
 
 let t = {};
 
 async function fetchApprovalRecordsByConnector(type) {
-     await setDomainInfo(); 
+    await setDomainInfo();
 
     const isChina = ZAGlobal.domainName === 'com.cn';
-    
-    const connectorName = isChina 
+
+    const connectorName = isChina
         ? "webbulkupdate.getapprovalrecordsconnectionchina.getapprovalrecordschina"
         : "webbulkupdate.getapprovalrecordsconnection.getapprovalrecords";
 
@@ -191,7 +205,7 @@ async function fetchApprovalRecordsByConnector(type) {
 
     while (more_records) {
         try {
-            const res = await ZOHO.CRM.CONNECTOR.invokeAPI(connectorName, { type, page });
+            const res = await ZOHO.CRM.CONNECTOR.invokeAPI(connectorName, { "type": type, "page": page });
             // const response = JSON.parse(res.response);
             // console.log(response);
             let parsed;
@@ -203,8 +217,10 @@ async function fetchApprovalRecordsByConnector(type) {
             const records = Array.isArray(parsed?.data) ? parsed.data : [];
             allRecords = allRecords.concat(records);
 
-            more_records = parsed.info.more_records === true;
+            // more_records = parsed.info.more_records === true;
+            more_records = parsed?.info?.more_records === true;
             page += 1;
+            // console.log(`Fetched ${type} page ${page}`, parsed);
 
         } catch (err) {
             console.error(`Error fetching page ${page} of ${type} records:`, err);
@@ -215,12 +231,63 @@ async function fetchApprovalRecordsByConnector(type) {
 }
 
 ZOHO.embeddedApp.on("PageLoad", async function (data) {
+    //Network error msg
+    function startNetworkMonitor() {
+        setInterval(() => {
+            if (!navigator.onLine) {
+                ZAGlobal.triggerToast(tt("toast_network_error"), 3000, 'error');
+            }
+        }, 15000); // every 15 seconds
+    }
+
+    function showLoader() {
+        document.getElementById('bulkLoader').classList.add('show');
+    }
+
+    function hideLoader() {
+        document.getElementById('bulkLoader').classList.remove('show');
+    }
+
+
     startNetworkMonitor();
     showLoader();
 
-    const processingTextEl = document.querySelector('.processingTextId');
+    const processingTextEl = document.querySelector('.processingText');
+
     if (processingTextEl) {
-        processingTextEl.innerText = tt("custom.APPROVAL.processingText");
+        const messageKeys = [
+            "processingText1", "processingText2", "processingText3", "processingText4", "processingText5", "processingText6",
+            "processingText7",
+            "processingText8",
+        ];
+
+        let index = 0;
+        let intervalId;
+
+
+        const applySlideUp = () => {
+            processingTextEl.classList.remove('slideUp');
+            void processingTextEl.offsetWidth; // Force reflow
+            processingTextEl.classList.add('slideUp');
+        };
+        const startRotatingMessages = () => {
+            processingTextEl.innerText = tt(messageKeys[index]);
+            applySlideUp();
+
+            intervalId = setInterval(() => {
+                index = (index + 1) % messageKeys.length;
+                processingTextEl.innerText = tt(messageKeys[index]);
+                applySlideUp();
+            }, 3000);
+        };
+        const waitForTranslations = () => {
+            if (typeof t === "object" && t["custom.APPROVAL.processingText1"]) {
+                startRotatingMessages();
+            } else {
+                setTimeout(waitForTranslations, 50);
+            }
+        };
+        waitForTranslations();
     }
     ZAGlobal.module = data.Entity;
 
@@ -228,28 +295,55 @@ ZOHO.embeddedApp.on("PageLoad", async function (data) {
         let awaitingRecords = [];
         let othersAwaitingRecords = [];
 
-        // 1. Fetch records assigned to current user via connector
+        // Fetch current user info again to store ID if not already
+        const userInfo = await ZOHO.CRM.CONFIG.getCurrentUser();
+        const currentUser = userInfo?.users?.[0];
+        if (currentUser) {
+            ZAGlobal.currentUserId = currentUser.id;
+        }
+
+        // Fetch records awaiting current user's approval
         awaitingRecords = await fetchApprovalRecordsByConnector("awaiting");
 
-        // 2. If Admin or CEO, fetch others_awaiting as well
+        // Fetch others_awaiting if admin or CEO
         if (ZAGlobal.isAdminOrCEO) {
             othersAwaitingRecords = await fetchApprovalRecordsByConnector("others_awaiting");
         }
-        const combinedRecords = [...awaitingRecords, ...othersAwaitingRecords];
-        // console.log("Combined Records:", combinedRecords);
-        // Store all records globally
+
+        // Deduplicate records by entity.id
+        const uniqueMap = new Map();
+        [...awaitingRecords, ...othersAwaitingRecords].forEach(record => {
+            uniqueMap.set(record.entity.id, record);
+        });
+
+        const combinedRecords = Array.from(uniqueMap.values());
+
+        // Sort to show current user's records first
+        combinedRecords.sort((a, b) => {
+            const aIsMine = a.waiting_for?.id === ZAGlobal.currentUserId ? 0 : 1;
+            const bIsMine = b.waiting_for?.id === ZAGlobal.currentUserId ? 0 : 1;
+            return aIsMine - bIsMine;
+        });
+
+        // Store records globally
         ZAGlobal.allRecords = [...combinedRecords];
-        ZAGlobal.filteredRecords = [...combinedRecords];
-        ZAGlobal.waitingRecords = [...awaitingRecords]; // Only current user's records (used for action buttons)
-        console.log("All Records:", ZAGlobal.allRecords);
-        
+        // ZAGlobal.filteredRecords = [...combinedRecords];
+
+        // Only current user's records (used for enable/disable actions)
+        ZAGlobal.waitingRecords = combinedRecords.filter(r => r.waiting_for?.id === ZAGlobal.currentUserId);
+
+        // ✅ Set default filter to current user
+        ZAGlobal.selectedUserId = ZAGlobal.currentUserId;
+        ZAGlobal.isSelfAndSubordinates = false;
+        ZAGlobal.applyCurrentFilters();
+        // ZAGlobal.filteredRecords = [...ZAGlobal.waitingRecords]; 
 
         await ZAGlobal.reRenderTableBody();
     } catch (error) {
         console.error('Error fetching records:', error);
         ZAGlobal.triggerToast("Error loading records.", 3000, 'error');
     } finally {
-        hideLoader(); 
+        hideLoader();
     }
     // Populate module dropdown (unchanged)
     ZOHO.CRM.META.getModules().then(function (data) {

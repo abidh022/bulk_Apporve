@@ -93,9 +93,32 @@ async function filterRecords() {
     });
 }
 
+// document.getElementById('filter-icon').addEventListener('click', (e) => {
+//     e.preventDefault();
+//     document.querySelector('#moduleContainer').classList.toggle('disabled');
+//     document.querySelector('.filter-div').classList.toggle('hidden');
+// });
 document.getElementById('filter-icon').addEventListener('click', (e) => {
     e.preventDefault();
-    document.querySelector('#moduleContainer').classList.toggle('disabled');
-    document.querySelector('.filter-div').classList.toggle('hidden');
-});
 
+    const moduleContainer = document.querySelector('#moduleContainer');
+    const filterDiv = document.querySelector('.filter-div');
+    const moduleSelect = $('#module'); // jQuery Select2
+    const modulePlaceholder = document.getElementById('module-placeholder');
+
+    const isNowHidden = filterDiv.classList.toggle('hidden');
+
+    if (!isNowHidden) {
+        moduleSelect.select2('destroy');
+        moduleSelect.hide();
+        modulePlaceholder.style.display = 'inline-block';
+    } else {
+        moduleSelect.show();
+        modulePlaceholder.style.display = 'none';
+
+        // ⚠️ Delay reinitialization slightly to ensure proper layout
+        setTimeout(() => {
+            moduleSelect.select2();
+        }, 10); // 10–50ms is usually enough
+    }
+});

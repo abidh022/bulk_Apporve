@@ -1,20 +1,6 @@
-// function tt(key) {
-//     const fullKey = `custom.APPROVAL.${key}`;
-//     const value = t[fullKey];
-//     if (!value) {
-//         console.warn(`Missing translation: ${fullKey}`);
-//         return `⚠️${key}`; 
-//     }
-//     return value;
-// }
-
-// function tt(key) {
-//     return t[`custom.APPROVAL.${key}`] || `custom.APPROVAL.${key}`;
-// }
-
 function tt(key) {
     if (!t) return key;
-    return t[`custom.APPROVAL.${key}`] || t[key] || key;
+    return t[`custom.APPROVAL.${key}`] || t[key] || "";
 }
 
 
@@ -55,6 +41,8 @@ function applyTranslations() {
     document.querySelector('.no-of-days .tbl-heading').innerText = tt("noOfDays");
     document.querySelector('#action').innerText = tt("action");
     document.querySelector('.processingText').innerText = tt("processingText");
+    document.getElementById('clearSelectedRecords').innerText = tt("clearSelectedRecords");
+    document.getElementById('module-placeholder').innerText = tt("module-placeholder");
 
 
     // Sort Dropdowns
@@ -231,10 +219,16 @@ async function initZohoApp() {
 
         const userProfile = currentUser.profile.name.toLowerCase();
         const userRole = currentUser.role.name.toLowerCase();
+        const currentUserId = currentUser.id;
+        ZAGlobal.currentUserId = currentUserId;
 
         // console.log(`User Profile: ${userProfile}, Role: ${userRole}`);
+        console.log(user);
+        
 
         ZAGlobal.isAdminOrCEO = (userProfile === 'administrator' || userRole === 'ceo');
+        console.log(`Is Admin or CEO: ${ZAGlobal.isAdminOrCEO} `,userProfile, userRole); // Is Admin or CEO: false  standard manager
+        
 
         let userLocale = currentUser.locale || 'en';
         let langCode = userLocale.startsWith('zh') ? 'zh' : 'en';

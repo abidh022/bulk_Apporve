@@ -160,11 +160,37 @@ function resetHeaderCheckbox() {
     selectAllCheckbox.indeterminate = false;
 }
 
+// function updateSelectedCount() {
+//     const count = ZAGlobal.selectedRecords.length;
+//     const counterElement = document.getElementById('selectedCounter');
+//     const clearBtn = document.getElementById('clearSelectedRecords');
+
+//     if (!counterElement) {
+//         const newCounter = document.createElement('div');
+//         newCounter.id = 'selectedCounter';
+//         document.querySelector('#selectedRecordsCount')?.prepend(newCounter);
+//     }
+
+//     const updatedCounter = document.getElementById('selectedCounter');
+
+//     if (count > 0) {
+//         let translatedText = t["custom.APPROVAL.selectedCounterText"].replace('${count}', count).replace('${plural}', count > 1 ? 's' : '');
+//         updatedCounter.textContent = translatedText;
+//         updatedCounter.style.display = 'block';
+//         if (clearBtn) clearBtn.style.display = 'inline-block';
+//     } else {
+//         updatedCounter.style.display = 'none';
+//         if (clearBtn) clearBtn.style.display = 'none';
+//     }
+// }
+
+
 function updateSelectedCount() {
     const count = ZAGlobal.selectedRecords.length;
     const counterElement = document.getElementById('selectedCounter');
     const clearBtn = document.getElementById('clearSelectedRecords');
 
+    // If counter doesn't exist, create it
     if (!counterElement) {
         const newCounter = document.createElement('div');
         newCounter.id = 'selectedCounter';
@@ -173,17 +199,34 @@ function updateSelectedCount() {
 
     const updatedCounter = document.getElementById('selectedCounter');
 
-    if (count > 0) {
-        let translatedText = t["custom.APPROVAL.selectedCounterText"].replace('${count}', count).replace('${plural}', count > 1 ? 's' : '');
+if (count > 0) {
+        updatedCounter.classList.remove('fade-out');
+        let translatedText = t["custom.APPROVAL.selectedCounterText"]
+            .replace('${count}', count)
+            .replace('${plural}', count > 1 ? 's' : '');
         updatedCounter.textContent = translatedText;
         updatedCounter.style.display = 'block';
-        if (clearBtn) clearBtn.style.display = 'inline-block';
+
+        if (clearBtn) {
+            clearBtn.classList.remove('fade-out');
+            clearBtn.style.display = 'inline-block';
+        }
     } else {
-        updatedCounter.style.display = 'none';
-        if (clearBtn) clearBtn.style.display = 'none';
+        updatedCounter.classList.add('fade-out');
+        setTimeout(() => {
+            updatedCounter.style.display = 'none';
+            updatedCounter.classList.remove('fade-out');
+        }, 400);
+
+        if (clearBtn) {
+            clearBtn.classList.add('fade-out');
+            setTimeout(() => {
+                clearBtn.style.display = 'none';
+                clearBtn.classList.remove('fade-out');
+            }, 400);
+        }
     }
 }
-
 
 document.getElementById('clearSelectedRecords')?.addEventListener('click', () => {
     ZAGlobal.selectedRecords = [];
