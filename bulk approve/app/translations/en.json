@@ -108,6 +108,6 @@
   "custom.APPROVAL.toast_max_200_limit": "You can only process a maximum of 200 records at a time.",
   "custom.APPROVAL.toast_approval_success": "{count} record {verb} approved.",
   "custom.APPROVAL.toast_rejection_success": "{count} record {verb} rejected.",
-  "custom.APPROVAL.toast_delegation_success": "{count} record {verb} delegated."
-
+  "custom.APPROVAL.toast_delegation_success": "{count} record {verb} delegated.",
+  "custom.APPROVAL.toast_not_authorized": "You are not authorized, Please reauthorize."
 }

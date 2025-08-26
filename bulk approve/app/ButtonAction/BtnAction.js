@@ -11,8 +11,10 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
             return;
         }
 
-         if (action === 'delegate' && record.waiting_for?.id !== ZAGlobal.currentUserId) {
+         if (action === 'delegate' &&  (record.waiting_for?.id !== ZAGlobal.currentUserId && record.waiting_for?.name !== ZAGlobal.currentUserRole)) {
             ZAGlobal.triggerToast("You can only delegate your own records.", 3000, 'warning');
+            console.log(ZAGlobal.currentUserId, record.waiting_for?.id, ZAGlobal.currentUserRole, record.waiting_for?.name)  ;
+            
             return;
         }
         recordsToProcess.push(record);
@@ -26,7 +28,7 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
         recordsToProcess = ZAGlobal.waitingRecords.filter(rec => ZAGlobal.selectedRecords.includes(rec.entity.id));
           // ✅ Restrict bulk delegation to only own records
         if (action === 'delegate') {
-            const notOwned = recordsToProcess.filter(rec => rec.waiting_for?.id !== ZAGlobal.currentUserId);
+            const notOwned = recordsToProcess.filter(rec => rec.waiting_for?.id !== ZAGlobal.currentUserId && rec.waiting_for?.name !== ZAGlobal.currentUserRole);
             if (notOwned.length > 0) {
                 ZAGlobal.triggerToast(tt("toast_delegate_own_only_bulk"), 3000, 'warning');
                 return;
@@ -226,7 +228,6 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
             hideLoader();
         }
     }
-    await ZAGlobal.reRenderTableBody();
 }
 
 

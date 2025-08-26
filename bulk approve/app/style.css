@@ -1133,3 +1133,25 @@ button:last-child[data-tooltip]::after {
     color: #888;
     padding: 6px 8px;
 }
+
+
+.role-with-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.role-with-tooltip:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: #333;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 10;
+    font-size: 12px;
+    opacity: 0.9;
+}

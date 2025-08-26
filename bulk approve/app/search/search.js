@@ -26,78 +26,104 @@ async function filterRecords() {
 
     searchBtn.addEventListener('click', async (e) => {
         e.preventDefault();
+        console.log("✅ Search button clicked");
 
-        let res = await ZOHO.CRM.API.getApprovalRecords({ type: "awaiting" });
-        let data = res.data;
-
-        if (searchInput.value.trim() === '') {
+        const searchValue = searchInput.value.trim().toLowerCase();
+        if (!searchValue) {
             ZAGlobal.triggerToast(tt("toast_enter_search_key"), 1000, 'info');
-            searchInput.focus();
             return;
         }
 
-        const searchValue = searchInput.value.trim().toLowerCase();
+        const selectedModule = Module?.value || 'All_Modules';
 
+        // 🔍 Get fresh base records from allRecords, not filteredRecords
+        let baseRecords = [...ZAGlobal.allRecords];
+
+        // 🔁 Apply user-based filtering
+        if (ZAGlobal.isSelfAndSubordinates) {
+            // No need to filter by user
+        } else if (ZAGlobal.selectedUserId) {
+            baseRecords = baseRecords.filter(r => r.waiting_for?.id === ZAGlobal.selectedUserId);
+        } else {
+            baseRecords = baseRecords.filter(r => r.waiting_for?.id === ZAGlobal.currentUserId);
+        }
+
+        // 🔁 Apply module filter if not "All"
+        if (selectedModule !== 'All_Modules') {
+            baseRecords = baseRecords.filter(r => r.module === selectedModule);
+        }
+
+        // 🔁 Apply record name filter
+        let finalFiltered = [];
         switch (recordName_filter_type.value) {
             case 'equals':
-                ZAGlobal.filteredRecords = data.filter(rec =>
-                    rec.module === Module.value &&
-                    rec.entity.name.toLowerCase().includes(searchValue)
+                finalFiltered = baseRecords.filter(r =>
+                    r.entity.name.toLowerCase().includes(searchValue)
                 );
                 break;
             case 'not_equals':
-                ZAGlobal.filteredRecords = data.filter(rec =>
-                    rec.module === Module.value &&
-                    !rec.entity.name.toLowerCase().includes(searchValue)
+                finalFiltered = baseRecords.filter(r =>
+                    !r.entity.name.toLowerCase().includes(searchValue)
                 );
                 break;
             case 'starts_with':
-                ZAGlobal.filteredRecords = data.filter(rec =>
-                    rec.module === Module.value &&
-                    rec.entity.name.toLowerCase().startsWith(searchValue)
+                finalFiltered = baseRecords.filter(r =>
+                    r.entity.name.toLowerCase().startsWith(searchValue)
                 );
                 break;
             case 'is':
-                ZAGlobal.filteredRecords = data.filter(rec =>
-                    rec.module === Module.value &&
-                    rec.entity.name.toLowerCase() === searchValue
+                finalFiltered = baseRecords.filter(r =>
+                    r.entity.name.toLowerCase() === searchValue
                 );
                 break;
             default:
-                console.log('Unknown filter type');
+                console.warn("Unknown filter type");
                 break;
         }
 
+        ZAGlobal.filteredRecords = finalFiltered;
         filtered_flag = true;
-        ZAGlobal.reRenderTableBody();
+        await ZAGlobal.reRenderTableBody();
     });
 
+clearBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
 
-    clearBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (filtered_flag) {
-            filtered_flag = false;
-            searchInput.value = '';
-            searchBtn.disabled = true;
-            searchBtn.style.opacity = "0.5";
-            searchBtn.style.cursor = "not-allowed";
-            document.getElementById('record-name-filter-input').value = '';
-            
-             $('#module').val('All_Modules').trigger('change');
-            document.getElementById('selected-module-display').style.display = 'none';
-            ZAGlobal.filteredRecords = ZAGlobal.allRecords;
-            ZAGlobal.reRenderTableBody();
+    if (filtered_flag) {
+        filtered_flag = false;
+        searchInput.value = '';
+        searchBtn.disabled = true;
+        searchBtn.style.opacity = "0.5";
+        searchBtn.style.cursor = "not-allowed";
+
+        document.getElementById('record-name-filter-input').value = '';
+        $('#module').val('All_Modules').trigger('change');
+        document.getElementById('selected-module-display').style.display = 'none';
+
+        // Reapply base filters based on current user context
+        let baseRecords = [];
+
+        if (ZAGlobal.isSelfAndSubordinates) {
+            baseRecords = [...ZAGlobal.allRecords];
+        } else if (ZAGlobal.selectedUserId) {
+            baseRecords = ZAGlobal.allRecords.filter(
+                rec => rec.waiting_for?.id === ZAGlobal.selectedUserId
+            );
         } else {
-            ZAGlobal.triggerToast(tt("toast_nothing_to_clear"), 1000, 'info');
+            baseRecords = ZAGlobal.allRecords.filter(
+                rec => rec.waiting_for?.id === ZAGlobal.currentUserId
+            );
         }
-    });
+
+        ZAGlobal.filteredRecords = baseRecords;
+        await ZAGlobal.reRenderTableBody();
+    } else {
+        ZAGlobal.triggerToast(tt("toast_nothing_to_clear"), 1000, 'info');
+    }
+});
+
 }
 
-// document.getElementById('filter-icon').addEventListener('click', (e) => {
-//     e.preventDefault();
-//     document.querySelector('#moduleContainer').classList.toggle('disabled');
-//     document.querySelector('.filter-div').classList.toggle('hidden');
-// });
 document.getElementById('filter-icon').addEventListener('click', (e) => {
     e.preventDefault();
 
@@ -122,3 +148,57 @@ document.getElementById('filter-icon').addEventListener('click', (e) => {
         }, 10); // 10–50ms is usually enough
     }
 });
+
+
+
+
+    // searchBtn.addEventListener('click', async (e) => {
+    //     e.preventDefault();
+
+    //     // let res = await ZOHO.CRM.API.getApprovalRecords({ type: "awaiting" });
+    //     // let data = res.data;
+    //     let data = ZAGlobal.allRecords;
+    //     // let data = ZAGlobal.filteredRecords;
+
+    //     if (searchInput.value.trim() === '') {
+    //         ZAGlobal.triggerToast(tt("toast_enter_search_key"), 1000, 'info');
+    //         searchInput.focus();
+    //         return;
+    //     }
+
+    //     const searchValue = searchInput.value.trim().toLowerCase();
+
+    //     switch (recordName_filter_type.value) {
+    //         case 'equals':
+    //             ZAGlobal.filteredRecords = data.filter(rec =>
+    //                 rec.module === Module.value &&
+    //                 rec.entity.name.toLowerCase().includes(searchValue)
+    //             );
+    //             break;
+    //         case 'not_equals':
+    //             ZAGlobal.filteredRecords = data.filter(rec =>
+    //                 rec.module === Module.value &&
+    //                 !rec.entity.name.toLowerCase().includes(searchValue)
+    //             );
+    //             break;
+    //         case 'starts_with':
+    //             ZAGlobal.filteredRecords = data.filter(rec =>
+    //                 rec.module === Module.value &&
+    //                 rec.entity.name.toLowerCase().startsWith(searchValue)
+    //             );
+    //             break;
+    //         case 'is':
+    //             ZAGlobal.filteredRecords = data.filter(rec =>
+    //                 rec.module === Module.value &&
+    //                 rec.entity.name.toLowerCase() === searchValue
+    //             );
+    //             break;
+    //         default:
+    //             console.log('Unknown filter type');
+    //             break;
+    //     }
+    //     console.log("Filtered Records:", ZAGlobal.filteredRecords);
+    //     filtered_flag = true;
+    //     // ZAGlobal.keepCurrentFilter = true;
+    //     await ZAGlobal.reRenderTableBody();
+    // });

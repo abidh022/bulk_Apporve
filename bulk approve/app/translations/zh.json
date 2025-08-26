@@ -75,6 +75,7 @@
   "custom.APPROVAL.toast_approval_success": "{count} 条记录已批准。",
   "custom.APPROVAL.toast_rejection_success": "{count} 条记录已拒绝。",
   "custom.APPROVAL.toast_delegation_success": "{count} 条记录已委托。",
+    "custom.APPROVAL.toast_not_authorized": "您没有授权，请重新授权。",
 
   
   "custom.APPROVAL.search_tooltip": "输入文字进行搜索",

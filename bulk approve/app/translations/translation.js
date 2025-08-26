@@ -217,18 +217,14 @@ async function initZohoApp() {
         const user = await ZOHO.CRM.CONFIG.getCurrentUser();
         let currentUser = user.users[0];
 
-        const userProfile = currentUser.profile.name.toLowerCase();
-        const userRole = currentUser.role.name.toLowerCase();
+        const userProfile = currentUser.profile.name;
+        const userRole = currentUser.role.name;
         const currentUserId = currentUser.id;
         ZAGlobal.currentUserId = currentUserId;
+        ZAGlobal.currentUserRole = userRole;
+        ZAGlobal.currentUserProfile = userProfile;
 
-        // console.log(`User Profile: ${userProfile}, Role: ${userRole}`);
-        console.log(user);
-        
-
-        ZAGlobal.isAdminOrCEO = (userProfile === 'administrator' || userRole === 'ceo');
-        console.log(`Is Admin or CEO: ${ZAGlobal.isAdminOrCEO} `,userProfile, userRole); // Is Admin or CEO: false  standard manager
-        
+        ZAGlobal.isAdminOrCEO = (userProfile === 'Administrator' || userRole === 'CEO');
 
         let userLocale = currentUser.locale || 'en';
         let langCode = userLocale.startsWith('zh') ? 'zh' : 'en';
@@ -236,17 +232,18 @@ async function initZohoApp() {
         ZAGlobal.userLang = langCode;
 
         await loadTranslation(langCode);
-        setupOwnerDropdownHeader();// owner header
+        await setupOwnerDropdownHeader();// owner header
 
         const modulesData = await ZOHO.CRM.META.getModules();
         if (modulesData && Array.isArray(modulesData.modules)) {
             populateModules(modulesData.modules);
         }
-
+await applyInitialFiltersAndRender();
     } catch (error) {
         console.error('Error initializing Zoho app:', error);
         // Fallback to English if initialization fails
         await loadTranslation('en');
     }
+    filterRecords();
 }
 initZohoApp();
