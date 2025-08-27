@@ -1,16 +1,16 @@
 // Function to handle when the module is selected
-function handleModuleSelection() {
-    const selectedModule = $('#module').val();
+// function handleModuleSelection() {
+//     const selectedModule = $('#module').val();
 
-    if (selectedModule === 'All_Modules') {
-        ZAGlobal.filteredRecords = ZAGlobal.allRecords;
-    } else {
-        ZAGlobal.filteredRecords = ZAGlobal.allRecords.filter(record => record.module === selectedModule);
-    }
+//     if (selectedModule === 'All_Modules') {
+//         ZAGlobal.filteredRecords = ZAGlobal.allRecords;
+//     } else {
+//         ZAGlobal.filteredRecords = ZAGlobal.allRecords.filter(record => record.module === selectedModule);
+//     }
 
-    ZAGlobal.reRenderTableBody();
-    applyTranslations(); 
-}
+//     ZAGlobal.reRenderTableBody();
+//     applyTranslations(); 
+// }
 
 ZAGlobal.selectAll = function () {
     const headerCheckbox = document.querySelector('#selectAllCheckbox');

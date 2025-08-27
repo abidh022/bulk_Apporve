@@ -42,6 +42,7 @@
   "custom.APPROVAL.clearSelectedRecords": "Clear all",
   "custom.APPROVAL.module-placeholder": "Filter Option",
   "custom.APPROVAL.record-name-filter-input": "Type here to filter",
+  "custom.APPROVAL.user-search-input": "Search here...",
   "custom.APPROVAL.filter_equals": "Contains",
   "custom.APPROVAL.filter_not_equals": "Doesn't Contain",
   "custom.APPROVAL.filter_starts_with": "Starts With",

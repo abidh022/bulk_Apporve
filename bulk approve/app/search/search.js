@@ -105,14 +105,11 @@ clearBtn.addEventListener('click', async (e) => {
 
         if (ZAGlobal.isSelfAndSubordinates) {
             baseRecords = [...ZAGlobal.allRecords];
-        } else if (ZAGlobal.selectedUserId) {
+        } else if (ZAGlobal.self === false) {
             baseRecords = ZAGlobal.allRecords.filter(
-                rec => rec.waiting_for?.id === ZAGlobal.selectedUserId
-            );
+            rec => rec.waiting_for?.id === ZAGlobal.selectedUserId);
         } else {
-            baseRecords = ZAGlobal.allRecords.filter(
-                rec => rec.waiting_for?.id === ZAGlobal.currentUserId
-            );
+            baseRecords = [...ZAGlobal.waitingRecords];
         }
 
         ZAGlobal.filteredRecords = baseRecords;

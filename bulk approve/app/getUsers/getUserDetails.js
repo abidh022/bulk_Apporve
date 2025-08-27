@@ -1,14 +1,7 @@
 function populateModules(modules) {
     const select = document.getElementById('module');
     const modulesList = document.getElementById('modules-list');
-    const previousValue = select.value;
 
-    // Destroy existing select2 instance if it exists
-    if ($.fn.select2 && $('#module').hasClass('select2-hidden-accessible')) {
-        $('#module').select2('destroy');
-    }
-
-    // Clear current options
     select.innerHTML = '';
     modulesList.innerHTML = '';
 
@@ -18,12 +11,16 @@ function populateModules(modules) {
     allModulesOption.textContent = t['custom.APPROVAL.module.All_Modules'] || 'All Modules';
     select.appendChild(allModulesOption);
 
-    const currentVisibleRecords = ZAGlobal.filteredRecords || [];
+    let currentVisibleRecords = [];
+    if (ZAGlobal.isSelfAndSubordinates === true) {
+        currentVisibleRecords = [...ZAGlobal.allRecords];
+    } else{ 
+        currentVisibleRecords = [...ZAGlobal.waitingRecords];
+    } 
     const availableModuleNames = new Set(currentVisibleRecords.map(r => r.module));
 
     modules.forEach(module => {
         const moduleName = module.api_name;
-
 
         if (module.creatable === true && module.visibility === 1 && availableModuleNames.has(moduleName)) {
             const option = document.createElement('option');
@@ -50,16 +47,13 @@ function populateModules(modules) {
         }
     });
 
-    // Restore previous value or default
-    const validValues = Array.from(select.options).map(opt => opt.value);
-    const valueToSet = validValues.includes(previousValue) ? previousValue : 'All_Modules';
-    $('#module').val(valueToSet).trigger('change.select2');
-
-    // Avoid duplicate event handlers
     $('#module').off('select2:select').on('select2:select', handleModuleSelection);
+}
 
-    // Initial filtered data
-    ZAGlobal.filteredRecords = [...ZAGlobal.allRecords];///////////////////
+function resetModuleFilterToAll() {
+    if ($('#module').length) {
+        $('#module').val('All_Modules').trigger('change.select2');
+    }
 }
 
 // Handler to filter records on selection
@@ -67,22 +61,28 @@ function handleModuleSelection() {
     const selectedModule = $('#module').val();
 
     const selectedUserId = ZAGlobal.selectedUserId || ZAGlobal.currentUserId;
-    const isSelfAndSubordinates = ZAGlobal.isSelfAndSubordinates || false;
+    const isSelfAndSubordinates = ZAGlobal.isSelfAndSubordinates === true;
+    const self = ZAGlobal.self === true;
+
+    let base = [];
+
+    if (isSelfAndSubordinates === true) {
+        base = [...ZAGlobal.allRecords];
+    } else if (self === false) {
+        base = ZAGlobal.allRecords.filter(
+            rec => rec.waiting_for?.id === selectedUserId
+        );
+    } else {
+        base = [...ZAGlobal.waitingRecords];
+    }
 
     if (selectedModule === 'All_Modules') {
-        ZAGlobal.filteredRecords = isSelfAndSubordinates
-            ? [...ZAGlobal.allRecords]
-            : ZAGlobal.allRecords.filter(r => r.waiting_for?.id === selectedUserId);
+        ZAGlobal.filteredRecords = base;
     } else {
-        ZAGlobal.filteredRecords = isSelfAndSubordinates
-            ? ZAGlobal.allRecords.filter(r => r.module === selectedModule)
-            : ZAGlobal.allRecords.filter(r =>
-                r.waiting_for?.id === selectedUserId && r.module === selectedModule
-            );
+        ZAGlobal.filteredRecords = base.filter(r => r.module === selectedModule);
     }
     ZAGlobal.reRenderTableBody();
 }
-
 
 async function populateUserList() {
     try {
@@ -216,9 +216,10 @@ function injectOwnerDropdown(users) {
     const dropdownMenu = $('<div>', { class: 'dropdown-menu user-dropdown', style: 'display: none;' });
     const searchInput = $('<input>', {
         type: 'text',
-        placeholder: 'Search users...',
+        placeholder: tt("user-search-input"),
         class: 'user-search-input'
     });
+    dropdownMenu.append(searchInput);
     const userList = $('<ul>', { class: 'user-list' });
 
     dropdownMenu.append(searchInput, userList);
@@ -243,9 +244,11 @@ function injectOwnerDropdown(users) {
             .on('click', async () => {
                 ZAGlobal.selectedUserId = currentUserId;
                 ZAGlobal.isSelfAndSubordinates = false;
+                ZAGlobal.self = true;
+                resetModuleFilterToAll(); 
                 ZAGlobal.filteredRecords = [...ZAGlobal.waitingRecords];
                 await ZAGlobal.reRenderTableBody();
-                renderUsers(Users);
+                renderUsers(users);
                 dropdownMenu.hide();
             });
 
@@ -266,9 +269,10 @@ function injectOwnerDropdown(users) {
             .on('click', () => {
                 ZAGlobal.selectedUserId = null;
                 ZAGlobal.isSelfAndSubordinates = true;
+                ZAGlobal.self = false;
+                resetModuleFilterToAll(); 
                 ZAGlobal.filteredRecords = [...ZAGlobal.allRecords];
                 ZAGlobal.reRenderTableBody();
-
                 renderUsers(filteredUsers);
                 dropdownMenu.hide();
             });
@@ -288,6 +292,10 @@ function injectOwnerDropdown(users) {
                 .text(`${user.full_name}`)
                 .attr('data-id', user.id)
                 .on('click', async () => {
+                    ZAGlobal.selectedUserId = user.id;
+                    ZAGlobal.isSelfAndSubordinates = false;
+                    ZAGlobal.self = false;
+                    resetModuleFilterToAll(); 
                     await filterByOwner(user.id);
                     renderUsers(filteredUsers);
                     dropdownMenu.hide();

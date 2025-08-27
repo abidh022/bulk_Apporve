@@ -44,6 +44,7 @@
   "custom.APPROVAL.clearSelectedRecords": "清除所有",
   "custom.APPROVAL.module-placeholder": "过滤选项",
   "custom.APPROVAL.record-name-filter-input": "在此输入以筛选",
+  "custom.APPROVAL.user-search-input": "搜索...",
   "custom.APPROVAL.filter_equals": "包含",
   "custom.APPROVAL.filter_not_equals": "不包含",
   "custom.APPROVAL.filter_starts_with": "开始于",

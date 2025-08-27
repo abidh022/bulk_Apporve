@@ -61,7 +61,11 @@ var ZAGlobal = {
             var endIndex = startIndex + ZAGlobal.recordsPerPage;
             var recordsToShow = ZAGlobal.filteredRecords.slice(startIndex, endIndex);
 
-            const modulesData = await ZOHO.CRM.META.getModules();
+            // const modulesData = await ZOHO.CRM.META.getModules();
+            if (!ZAGlobal.modulesData) {
+                ZAGlobal.modulesData = await ZOHO.CRM.META.getModules();
+            }
+            const modulesData = ZAGlobal.modulesData;
 
             recordsToShow.forEach(function (record) {
 
@@ -309,12 +313,28 @@ ZOHO.embeddedApp.on("PageLoad", async function (data) {
         const userInfo = await ZOHO.CRM.CONFIG.getCurrentUser();
         const currentUser = userInfo?.users?.[0];
         if (currentUser) {
+            const userLocale = currentUser.locale || 'en';
+            const langCode = userLocale.startsWith('zh') ? 'zh' : 'en'; // ✅ Declare early
+
             ZAGlobal.currentUserId = currentUser.id;
+            ZAGlobal.currentUserRole = currentUser.role.name;
+            ZAGlobal.currentUserProfile = currentUser.profile.name;
+            ZAGlobal.userLang = langCode;
+
+            console.log("langCode:", langCode);
+            console.log("userLocale:", userLocale);
+            console.log("currentUser:", currentUser);
+
+            ZAGlobal.isAdminOrCEO = (
+                currentUser.profile.name === 'Administrator' ||
+                currentUser.role.name === 'CEO'
+            );
+        await loadTranslation(langCode);
         }
+        console.log(ZAGlobal.currentUserId, ZAGlobal.currentUserRole, ZAGlobal.currentUserProfile, ZAGlobal.userLang, ZAGlobal.isAdminOrCEO);
+        await setupOwnerDropdownHeader();
 
         const awaitingRecords = await fetchApprovalRecordsByConnector("awaiting");
-        // ZAGlobal.awaitingRecords = [...awaitingRecords];
-
         ZAGlobal.waitingRecords = [...awaitingRecords];
         let allCombinedRecords = [...awaitingRecords];
 
@@ -329,32 +349,29 @@ ZOHO.embeddedApp.on("PageLoad", async function (data) {
             allCombinedRecords = [...awaitingRecords, ...filteredOthersAwaiting];
         }
 
-        // ZAGlobal.awaitingRecords = [...awaitingRecords];     // Self-only
-        ZAGlobal.waitingRecords = [...awaitingRecords];      // Self-only
         ZAGlobal.allRecords = [...allCombinedRecords];       // Self + others (used only when needed)
         ZAGlobal.selectedUserId = ZAGlobal.currentUserId;    // Default filter: self
         ZAGlobal.isSelfAndSubordinates = false;              // Default: no subordinates
+        ZAGlobal.self = true;                                // Default: self only 
         await applyInitialFiltersAndRender();                // Apply self-only filter
-        await ZAGlobal.reRenderTableBody();                  // Render table
+        // await ZAGlobal.reRenderTableBody();                  // Render table
+        // ZAGlobal.waitingRecords = [...awaitingRecords];      // Self-only
 
-        console.log("All Records:", ZAGlobal.allRecords);
-        console.log("Waiting (Self) Records:", ZAGlobal.waitingRecords);
-        console.log("Filtered Records (Applied):", ZAGlobal.filteredRecords);
-
-
+        // Populate modules dropdown
+        const modulesData = await ZOHO.CRM.META.getModules();
+        if (modulesData && Array.isArray(modulesData.modules)) {
+            populateModules(modulesData.modules);
+            resetModuleFilterToAll(); // Reset dropdown
+            handleModuleSelection();
+        }
     } catch (error) {
         console.error('Error fetching records:', error);
         ZAGlobal.triggerToast("Error loading records.", 3000, 'error');
+        await loadTranslation('en');
+
     } finally {
         hideLoader();
     }
-    // Populate module dropdown (unchanged)
-    ZOHO.CRM.META.getModules().then(function (data) {
-        if (data && Array.isArray(data.modules)) {
-            populateModules(data.modules);
-        }
-    });
-    //filterRecords();
-    //await ZAGlobalapplyInitialFiltersAndRender();
-    //await ZAGlobal.reRenderTableBody();
+    filterRecords();
 });
+

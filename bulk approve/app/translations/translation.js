@@ -212,38 +212,9 @@ async function setDomainInfo() {
 async function initZohoApp() {
     try {
         await ZOHO.embeddedApp.init();
-        // await setDomainInfo(); 
-
-        const user = await ZOHO.CRM.CONFIG.getCurrentUser();
-        let currentUser = user.users[0];
-
-        const userProfile = currentUser.profile.name;
-        const userRole = currentUser.role.name;
-        const currentUserId = currentUser.id;
-        ZAGlobal.currentUserId = currentUserId;
-        ZAGlobal.currentUserRole = userRole;
-        ZAGlobal.currentUserProfile = userProfile;
-
-        ZAGlobal.isAdminOrCEO = (userProfile === 'Administrator' || userRole === 'CEO');
-
-        let userLocale = currentUser.locale || 'en';
-        let langCode = userLocale.startsWith('zh') ? 'zh' : 'en';
-
-        ZAGlobal.userLang = langCode;
-
-        await loadTranslation(langCode);
-        await setupOwnerDropdownHeader();// owner header
-
-        const modulesData = await ZOHO.CRM.META.getModules();
-        if (modulesData && Array.isArray(modulesData.modules)) {
-            populateModules(modulesData.modules);
-        }
-await applyInitialFiltersAndRender();
     } catch (error) {
         console.error('Error initializing Zoho app:', error);
-        // Fallback to English if initialization fails
         await loadTranslation('en');
     }
-    filterRecords();
 }
 initZohoApp();
