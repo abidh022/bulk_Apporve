@@ -692,6 +692,9 @@ input[type="checkbox"] {
   border-color: #6d94cd;
   box-shadow: 0 0 10px rgba(35, 180, 237, 0.6);
 }
+.delegate-btn.not-allowed-cursor {
+    cursor: not-allowed;
+}
 
 /* td.action-buttons {
   display: flex;

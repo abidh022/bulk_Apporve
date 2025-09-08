@@ -76,8 +76,9 @@
   "custom.APPROVAL.toast_approval_success": "{count} 条记录已批准。",
   "custom.APPROVAL.toast_rejection_success": "{count} 条记录已拒绝。",
   "custom.APPROVAL.toast_delegation_success": "{count} 条记录已委托。",
-    "custom.APPROVAL.toast_not_authorized": "您没有授权，请重新授权。",
-
+  "custom.APPROVAL.toast_not_authorized": "您没有授权，请重新授权。",
+  "custom.APPROVAL.toast_no_records_for_selected_user": "所选用户没有记录",
+  "custom.APPROVAL.toast_delegate_own_records": "您只能委派您自己的记录。",
   
   "custom.APPROVAL.search_tooltip": "输入文字进行搜索",
   "custom.APPROVAL.tooltip_bulk_delegate": "选择至少一条记录进行委派",

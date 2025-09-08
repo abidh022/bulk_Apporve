@@ -11,12 +11,12 @@ function populateModules(modules) {
     allModulesOption.textContent = t['custom.APPROVAL.module.All_Modules'] || 'All Modules';
     select.appendChild(allModulesOption);
 
-    let currentVisibleRecords = [];
-    if (ZAGlobal.isSelfAndSubordinates === true) {
-        currentVisibleRecords = [...ZAGlobal.allRecords];
-    } else{ 
-        currentVisibleRecords = [...ZAGlobal.waitingRecords];
-    } 
+    let currentVisibleRecords = [...ZAGlobal.allRecords];
+    // if (ZAGlobal.isSelfAndSubordinates === true) {
+    //     currentVisibleRecords = [...ZAGlobal.allRecords];
+    // } else{ 
+    //     currentVisibleRecords = [...ZAGlobal.ownAwaitingRecords];
+    // } 
     const availableModuleNames = new Set(currentVisibleRecords.map(r => r.module));
 
     modules.forEach(module => {
@@ -73,7 +73,7 @@ function handleModuleSelection() {
             rec => rec.waiting_for?.id === selectedUserId
         );
     } else {
-        base = [...ZAGlobal.waitingRecords];
+        base = [...ZAGlobal.ownAwaitingRecords];
     }
 
     if (selectedModule === 'All_Modules') {
@@ -167,12 +167,12 @@ async function filterByOwner(userId) {
         // console.log(filtered);
 
         ZAGlobal.filteredRecords = filtered;
-        // ZAGlobal.waitingRecords = filtered;
+        // ZAGlobal.ownAwaitingRecords = filtered;
 
         await ZAGlobal.reRenderTableBody();
 
         if (filtered.length === 0) {
-            ZAGlobal.triggerToast("No records found for the selected user.", 3000, 'info');
+            ZAGlobal.triggerToast(tt("toast_no_records_for_selected_user"), 3000, 'info');
         }
     } catch (error) {
         console.error("Error while filtering by owner:", error);
@@ -245,8 +245,8 @@ function injectOwnerDropdown(users) {
                 ZAGlobal.selectedUserId = currentUserId;
                 ZAGlobal.isSelfAndSubordinates = false;
                 ZAGlobal.self = true;
-                resetModuleFilterToAll(); 
-                ZAGlobal.filteredRecords = [...ZAGlobal.waitingRecords];
+                resetModuleFilterToAll();
+                ZAGlobal.filteredRecords = [...ZAGlobal.ownAwaitingRecords];
                 await ZAGlobal.reRenderTableBody();
                 renderUsers(users);
                 dropdownMenu.hide();
@@ -270,8 +270,14 @@ function injectOwnerDropdown(users) {
                 ZAGlobal.selectedUserId = null;
                 ZAGlobal.isSelfAndSubordinates = true;
                 ZAGlobal.self = false;
-                resetModuleFilterToAll(); 
-                ZAGlobal.filteredRecords = [...ZAGlobal.allRecords];
+                resetModuleFilterToAll();
+                // ZAGlobal.filteredRecords = [...ZAGlobal.allRecords];
+                // ✅ Maintain ownAwaitingRecords at the top
+                const ownIds = new Set(ZAGlobal.ownAwaitingRecords.map(r => r.entity.id));
+                ZAGlobal.filteredRecords = [
+                    ...ZAGlobal.ownAwaitingRecords,
+                    ...ZAGlobal.allRecords.filter(r => !ownIds.has(r.entity.id))
+                ];
                 ZAGlobal.reRenderTableBody();
                 renderUsers(filteredUsers);
                 dropdownMenu.hide();
@@ -295,7 +301,7 @@ function injectOwnerDropdown(users) {
                     ZAGlobal.selectedUserId = user.id;
                     ZAGlobal.isSelfAndSubordinates = false;
                     ZAGlobal.self = false;
-                    resetModuleFilterToAll(); 
+                    resetModuleFilterToAll();
                     await filterByOwner(user.id);
                     renderUsers(filteredUsers);
                     dropdownMenu.hide();
@@ -392,7 +398,7 @@ function injectOwnerDropdown(users) {
 //             userList.append(
 //                 $('<li>').addClass('user-item').text("All Users").on('click', () => {
 //                     ZAGlobal.filteredRecords = [...ZAGlobal.allRecords];
-//                     ZAGlobal.waitingRecords = [...ZAGlobal.allRecords];
+//                     ZAGlobal.ownAwaitingRecords = [...ZAGlobal.allRecords];
 //                     ZAGlobal.reRenderTableBody();
 //                     // Remove underline on all headers to mimic unsort
 //                     document.querySelectorAll("thead th").forEach(header => {

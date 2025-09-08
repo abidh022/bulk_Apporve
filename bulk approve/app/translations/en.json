@@ -110,5 +110,9 @@
   "custom.APPROVAL.toast_approval_success": "{count} record {verb} approved.",
   "custom.APPROVAL.toast_rejection_success": "{count} record {verb} rejected.",
   "custom.APPROVAL.toast_delegation_success": "{count} record {verb} delegated.",
-  "custom.APPROVAL.toast_not_authorized": "You are not authorized, Please reauthorize."
+  "custom.APPROVAL.toast_not_authorized": "You are not authorized, Please reauthorize.",
+  "custom.APPROVAL.toast_no_records_for_selected_user": "No records found for the selected user",
+  "custom.APPROVAL.toast_delegate_own_records": "You can only delegate your own records."
+  
+
 }

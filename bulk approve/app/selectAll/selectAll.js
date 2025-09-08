@@ -1,17 +1,3 @@
-// Function to handle when the module is selected
-// function handleModuleSelection() {
-//     const selectedModule = $('#module').val();
-
-//     if (selectedModule === 'All_Modules') {
-//         ZAGlobal.filteredRecords = ZAGlobal.allRecords;
-//     } else {
-//         ZAGlobal.filteredRecords = ZAGlobal.allRecords.filter(record => record.module === selectedModule);
-//     }
-
-//     ZAGlobal.reRenderTableBody();
-//     applyTranslations(); 
-// }
-
 ZAGlobal.selectAll = function () {
     const headerCheckbox = document.querySelector('#selectAllCheckbox');
     const rowCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]:not(.disabled-checkbox):not(:checked)');
@@ -38,7 +24,7 @@ ZAGlobal.selectAll = function () {
     });
 
     updateSelectAllCheckboxState(rowCheckboxes, headerCheckbox);
-    applyTranslations(); 
+    applyTranslations();
 };
 
 function updateHeaderCheckboxState(rowCheckboxes, headerCheckbox) {
@@ -135,7 +121,7 @@ function processAction(action, recordIds) {
     ZAGlobal.reRenderTableBody();
     updateSelectAllCheckboxState();
     updateSelectedCount();
-    applyTranslations(); 
+    applyTranslations();
 
 }
 
@@ -160,6 +146,79 @@ function resetHeaderCheckbox() {
     selectAllCheckbox.indeterminate = false;
 }
 
+function updateSelectedCount() {
+    const count = ZAGlobal.selectedRecords.length;
+    const counterElement = document.getElementById('selectedCounter');
+    const clearBtn = document.getElementById('clearSelectedRecords');
+
+    // If counter doesn't exist, create it
+    if (!counterElement) {
+        const newCounter = document.createElement('div');
+        newCounter.id = 'selectedCounter';
+        document.querySelector('#selectedRecordsCount')?.prepend(newCounter);
+    }
+
+    const updatedCounter = document.getElementById('selectedCounter');
+
+    if (count > 0) {
+        updatedCounter.classList.remove('fade-out');
+        updatedCounter.style.display = 'block';
+        let translatedText = t["custom.APPROVAL.selectedCounterText"]
+            .replace('${count}', count)
+            .replace('${plural}', count > 1 ? 's' : '');
+        updatedCounter.textContent = translatedText;
+
+        if (clearBtn) {
+            clearBtn.classList.remove('fade-out');
+            clearBtn.style.display = 'inline-block';
+        }
+    } else {
+        updatedCounter.classList.add('fade-out');
+        updatedCounter.addEventListener('animationend', function handler() {
+            updatedCounter.style.display = 'none';
+            updatedCounter.classList.remove('fade-out');
+            updatedCounter.removeEventListener('animationend', handler);
+        });
+
+        if (clearBtn) {
+            clearBtn.classList.add('fade-out');
+            clearBtn.addEventListener('animationend', function handler() {
+                clearBtn.style.display = 'none';
+                clearBtn.classList.remove('fade-out');
+                clearBtn.removeEventListener('animationend', handler);
+            });
+        }
+    }
+}
+
+document.getElementById('clearSelectedRecords')?.addEventListener('click', () => {
+    ZAGlobal.selectedRecords = [];
+    document.querySelectorAll('tbody input[type="checkbox"]:not(:disabled)').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    resetHeaderCheckbox();
+    updateSelectedCount();
+});
+
+
+
+
+
+
+// Function to handle when the module is selected
+// function handleModuleSelection() {
+//     const selectedModule = $('#module').val();
+
+//     if (selectedModule === 'All_Modules') {
+//         ZAGlobal.filteredRecords = ZAGlobal.allRecords;
+//     } else {
+//         ZAGlobal.filteredRecords = ZAGlobal.allRecords.filter(record => record.module === selectedModule);
+//     }
+
+//     ZAGlobal.reRenderTableBody();
+//     applyTranslations();
+// }
+
 // function updateSelectedCount() {
 //     const count = ZAGlobal.selectedRecords.length;
 //     const counterElement = document.getElementById('selectedCounter');
@@ -183,56 +242,3 @@ function resetHeaderCheckbox() {
 //         if (clearBtn) clearBtn.style.display = 'none';
 //     }
 // }
-
-
-function updateSelectedCount() {
-    const count = ZAGlobal.selectedRecords.length;
-    const counterElement = document.getElementById('selectedCounter');
-    const clearBtn = document.getElementById('clearSelectedRecords');
-
-    // If counter doesn't exist, create it
-    if (!counterElement) {
-        const newCounter = document.createElement('div');
-        newCounter.id = 'selectedCounter';
-        document.querySelector('#selectedRecordsCount')?.prepend(newCounter);
-    }
-
-    const updatedCounter = document.getElementById('selectedCounter');
-
-if (count > 0) {
-        updatedCounter.classList.remove('fade-out');
-        let translatedText = t["custom.APPROVAL.selectedCounterText"]
-            .replace('${count}', count)
-            .replace('${plural}', count > 1 ? 's' : '');
-        updatedCounter.textContent = translatedText;
-        updatedCounter.style.display = 'block';
-
-        if (clearBtn) {
-            clearBtn.classList.remove('fade-out');
-            clearBtn.style.display = 'inline-block';
-        }
-    } else {
-        updatedCounter.classList.add('fade-out');
-        setTimeout(() => {
-            updatedCounter.style.display = 'none';
-            updatedCounter.classList.remove('fade-out');
-        }, 400);
-
-        if (clearBtn) {
-            clearBtn.classList.add('fade-out');
-            setTimeout(() => {
-                clearBtn.style.display = 'none';
-                clearBtn.classList.remove('fade-out');
-            }, 400);
-        }
-    }
-}
-
-document.getElementById('clearSelectedRecords')?.addEventListener('click', () => {
-    ZAGlobal.selectedRecords = [];
-     document.querySelectorAll('tbody input[type="checkbox"]:not(:disabled)').forEach(checkbox => {
-        checkbox.checked = false;
-    });
-    resetHeaderCheckbox();
-    updateSelectedCount();
-});

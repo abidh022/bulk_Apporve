@@ -5,16 +5,18 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
     let recordsToProcess = [];
     if (recordId) {
         // Single record action
-    const record = ZAGlobal.allRecords.find(rec => rec.entity.id == recordId);       
-    if (!record) {
+        const record = ZAGlobal.allRecords.find(rec => rec.entity.id == recordId);
+        if (!record) {
             ZAGlobal.triggerToast(tt("toast_record_not_found"), 3000, 'warning');
             return;
         }
 
-         if (action === 'delegate' &&  (record.waiting_for?.id !== ZAGlobal.currentUserId && record.waiting_for?.name !== ZAGlobal.currentUserRole)) {
-            ZAGlobal.triggerToast("You can only delegate your own records.", 3000, 'warning');
-            console.log(ZAGlobal.currentUserId, record.waiting_for?.id, ZAGlobal.currentUserRole, record.waiting_for?.name)  ;
-            
+        if (action === 'delegate' && (record.waiting_for?.id !== ZAGlobal.currentUserId && record.waiting_for?.name !== ZAGlobal.currentUserRole)) {
+            ZAGlobal.triggerToast(tt("toast_delegate_own_records"), 3000, 'warning');
+            const delegateBtn = document.querySelector(`.delegate-btn[data-id="${record.entity.id}"]`);
+            if (delegateBtn) {
+                delegateBtn.classList.add('not-allowed-cursor');
+            }
             return;
         }
         recordsToProcess.push(record);
@@ -25,16 +27,16 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
             ZAGlobal.triggerToast(tt("toast_select_one_record"), 3000, 'warning');
             return;
         }
-        recordsToProcess = ZAGlobal.waitingRecords.filter(rec => ZAGlobal.selectedRecords.includes(rec.entity.id));
-          // ✅ Restrict bulk delegation to only own records
+        recordsToProcess = ZAGlobal.ownAwaitingRecords.filter(rec => ZAGlobal.selectedRecords.includes(rec.entity.id));
+        // ✅ Restrict bulk delegation to only own records
         if (action === 'delegate') {
             const notOwned = recordsToProcess.filter(rec => rec.waiting_for?.id !== ZAGlobal.currentUserId && rec.waiting_for?.name !== ZAGlobal.currentUserRole);
             if (notOwned.length > 0) {
                 ZAGlobal.triggerToast(tt("toast_delegate_own_only_bulk"), 3000, 'warning');
                 return;
             }
+        }
     }
-}
     document.getElementById('approvalRejectPopup').style.display = 'none';
     document.getElementById('approvalRejectPopup').style.display = 'flex';
     // Add keydown listener
@@ -179,20 +181,49 @@ ZAGlobal.buttonAction = async function (action, recordId = null) {
                     if (action === 'approve') approvedRecordsCount++;
                     else if (action === 'reject') rejectedRecordsCount++;
                     else if (action === 'delegate') delegatedRecordsCount++;
-
-                    const updatedRecord = ZAGlobal.waitingRecords.find(r => r.entity.id === res.details.id);
+                    const updatedRecord = ZAGlobal.allRecords.find(r => r.entity.id === res.details.id);
                     if (updatedRecord) {
                         updatedRecord.is_approved = action === 'approve';
                         updatedRecord.is_rejected = action === 'reject';
                         updatedRecord.is_delegated = action === 'delegate';
 
-                        // Remove from all relevant arrays
-                        ZAGlobal.processedRecords.push(updatedRecord);
-                        ZAGlobal.waitingRecords = ZAGlobal.waitingRecords.filter(r => r.entity.id !== res.details.id);
-                        ZAGlobal.filteredRecords = ZAGlobal.filteredRecords.filter(r => r.entity.id !== res.details.id);
-                        ZAGlobal.allRecords = ZAGlobal.allRecords.filter(r => r.entity.id !== res.details.id);
+                        // Always remove from selection and own list
                         ZAGlobal.selectedRecords = ZAGlobal.selectedRecords.filter(id => id !== res.details.id);
+                        ZAGlobal.ownAwaitingRecords = ZAGlobal.ownAwaitingRecords.filter(r => r.entity.id !== res.details.id);
+                        ZAGlobal.filteredRecords = ZAGlobal.filteredRecords.filter(r => r.entity.id !== res.details.id);
+
+                        if (action === 'delegate') {
+                            const selectedText = $('#userSelect option:selected').text();
+                            const selectedName = selectedText.split('-')[0].trim();
+
+                            updatedRecord.waiting_for = {
+                                id: selectedUser,
+                                name: selectedName,
+                            };
+
+                            // console.log(`✅ Delegated record ${record.entity.id} to user ID ${selectedUser}, Name ${selectedName}`);
+
+                            // Replace or add in allRecords
+                            const index = ZAGlobal.allRecords.findIndex(r => r.entity.id === res.details.id);
+                            if (index !== -1) {
+                                ZAGlobal.allRecords[index] = updatedRecord;
+                            } else {
+                                ZAGlobal.allRecords.push(updatedRecord);
+                            }
+
+                            // // Sort to push delegated records down (new user’s records go lower)
+                            // ZAGlobal.allRecords.sort((a, b) =>
+                            //     new Date(b.entity.modified_time || b.entity.created_time) -
+                            //     new Date(a.entity.modified_time || a.entity.created_time)
+                            // );
+                        } else {
+                            // Approve/Reject → remove from allRecords
+                            ZAGlobal.allRecords = ZAGlobal.allRecords.filter(r => r.entity.id !== res.details.id);
+                        }
+
+                        ZAGlobal.processedRecords.push(updatedRecord);
                     }
+                    await applyInitialFiltersAndRender();
 
                 } catch (error) {
                     console.log("Error in API call:", error);

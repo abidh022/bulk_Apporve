@@ -26,8 +26,7 @@ async function filterRecords() {
 
     searchBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        console.log("✅ Search button clicked");
-
+    
         const searchValue = searchInput.value.trim().toLowerCase();
         if (!searchValue) {
             ZAGlobal.triggerToast(tt("toast_enter_search_key"), 1000, 'info');
@@ -109,7 +108,7 @@ clearBtn.addEventListener('click', async (e) => {
             baseRecords = ZAGlobal.allRecords.filter(
             rec => rec.waiting_for?.id === ZAGlobal.selectedUserId);
         } else {
-            baseRecords = [...ZAGlobal.waitingRecords];
+            baseRecords = [...ZAGlobal.ownAwaitingRecords];
         }
 
         ZAGlobal.filteredRecords = baseRecords;
@@ -145,57 +144,3 @@ document.getElementById('filter-icon').addEventListener('click', (e) => {
         }, 10); // 10–50ms is usually enough
     }
 });
-
-
-
-
-    // searchBtn.addEventListener('click', async (e) => {
-    //     e.preventDefault();
-
-    //     // let res = await ZOHO.CRM.API.getApprovalRecords({ type: "awaiting" });
-    //     // let data = res.data;
-    //     let data = ZAGlobal.allRecords;
-    //     // let data = ZAGlobal.filteredRecords;
-
-    //     if (searchInput.value.trim() === '') {
-    //         ZAGlobal.triggerToast(tt("toast_enter_search_key"), 1000, 'info');
-    //         searchInput.focus();
-    //         return;
-    //     }
-
-    //     const searchValue = searchInput.value.trim().toLowerCase();
-
-    //     switch (recordName_filter_type.value) {
-    //         case 'equals':
-    //             ZAGlobal.filteredRecords = data.filter(rec =>
-    //                 rec.module === Module.value &&
-    //                 rec.entity.name.toLowerCase().includes(searchValue)
-    //             );
-    //             break;
-    //         case 'not_equals':
-    //             ZAGlobal.filteredRecords = data.filter(rec =>
-    //                 rec.module === Module.value &&
-    //                 !rec.entity.name.toLowerCase().includes(searchValue)
-    //             );
-    //             break;
-    //         case 'starts_with':
-    //             ZAGlobal.filteredRecords = data.filter(rec =>
-    //                 rec.module === Module.value &&
-    //                 rec.entity.name.toLowerCase().startsWith(searchValue)
-    //             );
-    //             break;
-    //         case 'is':
-    //             ZAGlobal.filteredRecords = data.filter(rec =>
-    //                 rec.module === Module.value &&
-    //                 rec.entity.name.toLowerCase() === searchValue
-    //             );
-    //             break;
-    //         default:
-    //             console.log('Unknown filter type');
-    //             break;
-    //     }
-    //     console.log("Filtered Records:", ZAGlobal.filteredRecords);
-    //     filtered_flag = true;
-    //     // ZAGlobal.keepCurrentFilter = true;
-    //     await ZAGlobal.reRenderTableBody();
-    // });

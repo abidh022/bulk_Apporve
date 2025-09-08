@@ -4,7 +4,7 @@ var ZAGlobal = {
     allRecords: [],
     filteredRecords: [],
     processedRecords: [],
-    waitingRecords: [],
+    ownAwaitingRecords: [],
     recordsPerPage: 10,
     currentPage: 1,
     totalPages: 0,
@@ -170,7 +170,7 @@ function updateTotalRecordsCount() {
 
     const label = t["custom.APPROVAL.totalRecordsCount"] || "Total Records";
     const total = ZAGlobal.filteredRecords.length;
-    console.log(total);
+    // console.log(total);
 
     totalCountEl.innerHTML = `${label}: ${total === 0 ? '0' : `<strong>${total}</strong>`}`;
 }
@@ -179,9 +179,13 @@ async function applyInitialFiltersAndRender() {
     const isSelfAndSubordinates = ZAGlobal.isSelfAndSubordinates || false;
 
     if (isSelfAndSubordinates) {
-        ZAGlobal.filteredRecords = [...ZAGlobal.allRecords];
+          const ownIds = new Set(ZAGlobal.ownAwaitingRecords.map(r => r.entity.id));
+        ZAGlobal.filteredRecords = [
+            ...ZAGlobal.ownAwaitingRecords,
+            ...ZAGlobal.allRecords.filter(r => !ownIds.has(r.entity.id))
+        ];
     } else {
-        ZAGlobal.filteredRecords = [...ZAGlobal.waitingRecords];
+        ZAGlobal.filteredRecords = [...ZAGlobal.ownAwaitingRecords];
     }
     await ZAGlobal.reRenderTableBody();
 }
@@ -205,22 +209,36 @@ async function fetchApprovalRecordsByConnector(type) {
         const response = await ZOHO.CRM.CONNECTOR.isConnectorAuthorized(connectorKey);
         const isAuthorized = response === "true";
         if (isAuthorized) {
-            return isAuthorized;
+            return true;
         } else {
-            await openAuthWindow();
+            const success = await openAuthWindowWithTimeout();
+            return success;
+        }
+    }
+
+    async function openAuthWindowWithTimeout(timeout = 15000) {
+        try {
+            await Promise.race([
+                ZOHO.CRM.CONNECTOR.authorize(connectorKey),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("auth_timeout")), timeout)
+                )
+            ]);
+            return true;
+        } catch (error) {
+            if (error.message === "auth_timeout") {
+                ZAGlobal.triggerToast(tt("toast_auth_timeout") || "Authorization failed. Please try again and reauthorize.", 60000, "warning");
+            } else {
+                console.error("Failed to authorize connector:", error);
+                ZAGlobal.triggerToast(tt("toast_auth_failed") || "Authorization failed or was cancelled.", 3000, "error");
+            }
+            hideLoader();
             return false;
         }
     }
-    async function openAuthWindow() {
-        try {
-            await ZOHO.CRM.CONNECTOR.authorize(connectorKey);
-        } catch (error) {
-            console.error("Failed to authorize connector:", error);
-        }
-    }
+
     const authorized = await isAuthorized();
     if (!authorized) {
-        ZAGlobal.triggerToast(tt("toast_not_authorized"), 3000, 'error');
         return [];
     }
 
@@ -321,21 +339,16 @@ ZOHO.embeddedApp.on("PageLoad", async function (data) {
             ZAGlobal.currentUserProfile = currentUser.profile.name;
             ZAGlobal.userLang = langCode;
 
-            console.log("langCode:", langCode);
-            console.log("userLocale:", userLocale);
-            console.log("currentUser:", currentUser);
-
             ZAGlobal.isAdminOrCEO = (
                 currentUser.profile.name === 'Administrator' ||
                 currentUser.role.name === 'CEO'
             );
-        await loadTranslation(langCode);
+            await loadTranslation(langCode);
         }
-        console.log(ZAGlobal.currentUserId, ZAGlobal.currentUserRole, ZAGlobal.currentUserProfile, ZAGlobal.userLang, ZAGlobal.isAdminOrCEO);
         await setupOwnerDropdownHeader();
 
         const awaitingRecords = await fetchApprovalRecordsByConnector("awaiting");
-        ZAGlobal.waitingRecords = [...awaitingRecords];
+        ZAGlobal.ownAwaitingRecords = [...awaitingRecords];
         let allCombinedRecords = [...awaitingRecords];
 
         if (ZAGlobal.isAdminOrCEO) {
@@ -355,7 +368,7 @@ ZOHO.embeddedApp.on("PageLoad", async function (data) {
         ZAGlobal.self = true;                                // Default: self only 
         await applyInitialFiltersAndRender();                // Apply self-only filter
         // await ZAGlobal.reRenderTableBody();                  // Render table
-        // ZAGlobal.waitingRecords = [...awaitingRecords];      // Self-only
+        // ZAGlobal.ownAwaitingRecords = [...awaitingRecords];      // Self-only
 
         // Populate modules dropdown
         const modulesData = await ZOHO.CRM.META.getModules();
